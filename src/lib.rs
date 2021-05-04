@@ -97,6 +97,10 @@ pub struct Rule {
     actions_by_info_set: BTreeMap<InformationSetId, Vec<ActionId>>,
     #[serde(skip_deserializing)]
     player_by_info_set: BTreeMap<InformationSetId, Player>,
+    #[serde(skip_deserializing)]
+    node_value_scale: NodeValue,
+    #[serde(skip_deserializing)]
+    max_action_size_of: BTreeMap<Player, usize>,
 }
 
 impl Rule {
@@ -144,6 +148,28 @@ impl Rule {
                 }
             }
         }
+        
+        // build delta (the scale of NodeValue)
+        self.node_value_scale = self.nodes.iter().filter(|&(_, node)| {
+                is_terminal(node)
+            }).map(|(_, node)| {
+                value_of(node).unwrap()
+            }).max().unwrap() - 
+            self.nodes.iter().filter(|&(_, node)| {
+                is_terminal(node)
+            }).map(|(_, node)| {
+                value_of(node).unwrap()
+            }).min().unwrap();
+        
+        self.max_action_size_of = [Player::P1, Player::P2].iter().map(|player| {
+            (player.clone(), {
+                self.nodes.iter().filter(|&(_, node)| {
+                    is_non_terminal(node) && player_of(node).unwrap() == *player
+                }).map(|(_, node)| {
+                    edges_of(node).unwrap().len()
+                }).max().unwrap()
+            })
+        }).collect();
     }
 
     pub fn bfs_ord(&self) -> Vec<NodeId> {
@@ -390,7 +416,18 @@ pub mod cfr {
 
         println!("exploitabilyty: {}", solver::calc_exploitability(rule, &avg_prof));
 
-        let steps = 10000;
+        let exploitability_upper_bound = |t: Value| {
+            let a1 = rule.info_partitions[&Player::P1].len() as Value * 
+                (rule.max_action_size_of[&Player::P1] as Value).sqrt();
+            let a2 = rule.info_partitions[&Player::P2].len() as Value * 
+                (rule.max_action_size_of[&Player::P2] as Value).sqrt();
+
+            let max = if a1 < a2 { a2 } else { a1 };
+
+            4.0 * max / t.sqrt()
+        };
+
+        let steps = 100000;
         for t in 1..steps+1 {
             regret = regret.iter().map(|(myself, reg)| {
                 (myself.clone(), {                        
@@ -452,7 +489,12 @@ pub mod cfr {
                 })
             }).collect();
 
-            println!("exploitabilyty: {}", solver::calc_exploitability(rule, &avg_prof));
+            if t % 1000 == 0 {
+                println!("exploitabilyty: {} / ub: {}",
+                    solver::calc_exploitability(rule, &avg_prof),
+                    exploitability_upper_bound(t as Value)
+                );
+            }
         }
 
         avg_prof
