@@ -414,7 +414,6 @@ pub mod cfr {
         let mut latest_prof = init_prof;
         let mut avg_prof = latest_prof.clone();
 
-
         println!("exploitabilyty: {}", solver::calc_exploitability(rule, &avg_prof));
 
         let exploitability_upper_bound = |t: Value| {
