@@ -2,7 +2,6 @@ use std::collections::{BTreeMap,VecDeque};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::fs;
-use std::cmp;
 use ord_subset::OrdSubsetIterExt;
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, Debug)]
@@ -119,7 +118,6 @@ impl Rule {
     }
 
     fn build(&mut self) {
-        // build info_set_id_by_node
         for (_, partition) in self.info_partitions.iter() {                
             for (info_set_id, info_set) in partition.iter() {
                 for node_id in info_set.iter() {
@@ -128,7 +126,6 @@ impl Rule {
             }
         }
 
-        // build actions_by_info_set, player_by_info_set
         for (_, partition) in self.info_partitions.iter() {                
             for (info_set_id, info_set) in partition.iter() {
                 for node_id in info_set.iter() {                        
@@ -150,24 +147,19 @@ impl Rule {
             }
         }
         
-        // build delta (the scale of NodeValue)
-        self.node_value_scale = self.nodes.iter().filter(|&(_, node)| {
+        self.node_value_scale = {
+            let iter = self.nodes.iter().filter(|&(_, node)| {
                 is_terminal(node)
             }).map(|(_, node)| {
                 value_of(node).unwrap()
-            }).max().unwrap() - 
-            self.nodes.iter().filter(|&(_, node)| {
-                is_terminal(node)
-            }).map(|(_, node)| {
-                value_of(node).unwrap()
-            }).min().unwrap();
+            });
+            iter.clone().max().unwrap() - iter.min().unwrap()
+        };
         
         self.max_action_size_of = [Player::P1, Player::P2].iter().map(|player| {
             (player.clone(), {
-                self.nodes.iter().filter(|&(_, node)| {
-                    is_non_terminal(node) && player_of(node).unwrap() == *player
-                }).map(|(_, node)| {
-                    edges_of(node).unwrap().len()
+                self.info_partitions[player].iter().map(|(info_set_id, _)| {
+                    self.actions_by_info_set[info_set_id].len()
                 }).max().unwrap()
             })
         }).collect();

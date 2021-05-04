@@ -12,6 +12,8 @@ mod tests {
         assert_approx_eq!(solver::calc_exploitability(&rule, &prof), 0.0);
 
         let prof = profile::uniform(&rule);
-        assert!(solver::calc_exploitability(&rule, &prof) > 0.0);
+        solver::calc_exploitability(&rule, &prof);
+
+        cfr::calc_nash_strt(&rule, prof, 1000);
     }
 }
