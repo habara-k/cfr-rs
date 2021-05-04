@@ -2,6 +2,7 @@ use std::collections::{BTreeMap,VecDeque};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::fs;
+use std::cmp;
 use ord_subset::OrdSubsetIterExt;
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, Debug)]
@@ -428,6 +429,7 @@ pub mod cfr {
         };
 
         let steps = 100000;
+
         for t in 1..steps+1 {
             regret = regret.iter().map(|(myself, reg)| {
                 (myself.clone(), {                        
