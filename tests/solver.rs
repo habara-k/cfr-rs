@@ -11,9 +11,7 @@ mod tests {
         assert_approx_eq!(solver::calc_ev(&rule, &prof), -1.0 / 18.0);
         assert_approx_eq!(solver::calc_exploitability(&rule, &prof), 0.0);
 
-        let prof = profile::from_strt(
-            &Player::P1, strategy::uniform(&rule, &Player::P1),
-            &Player::P2, strategy::uniform(&rule, &Player::P2)).unwrap();
+        let prof = profile::uniform(&rule);
         assert!(solver::calc_exploitability(&rule, &prof) > 0.0);
     }
 }

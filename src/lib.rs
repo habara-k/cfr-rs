@@ -2,6 +2,7 @@ use std::collections::{BTreeMap,VecDeque};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::fs;
+use std::cmp;
 use ord_subset::OrdSubsetIterExt;
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, Debug)]
@@ -42,6 +43,38 @@ pub enum Node {
     },
 }
 
+pub fn is_terminal(node: &Node) -> bool {
+    match node {
+        Node::Terminal{ .. } => true,
+        Node::NonTerminal{ .. } => false,
+    }
+}
+
+pub fn is_non_terminal(node: &Node) -> bool {
+    match node {
+        Node::Terminal{ .. } => false,
+        Node::NonTerminal{ .. } => true,
+    }
+}
+
+pub fn value_of(node: &Node) -> Option<NodeValue> {
+    match node {
+        Node::Terminal{ value } => Some(*value),
+        Node::NonTerminal{ .. } => None,
+    }
+}
+pub fn player_of(node: &Node) -> Option<Player> {
+    match node {
+        Node::Terminal{ .. } => None,
+        Node::NonTerminal{ player, .. } => Some(player.clone()),
+    }
+}
+pub fn edges_of(node: &Node) -> Option<BTreeMap<ActionId, NodeId>> {
+    match node {
+        Node::Terminal{ .. } => None,
+        Node::NonTerminal{ edges, .. } => Some(edges.clone()),
+    }
+}
 
 #[derive(Deserialize, Serialize)]
 pub struct Rule {
@@ -132,6 +165,21 @@ pub type Transition = BTreeMap<NodeId, Distribution>;
 pub type Strategy = BTreeMap<InformationSetId, Distribution>;
 pub type Profile = BTreeMap<Player,Strategy>;
 
+pub mod transition {
+    use super::*;
+    pub fn ones(rule: &Rule) -> Transition {
+        rule.nodes.iter().filter(|&(node_id, node)| {
+            is_non_terminal(&node) && player_of(&node).unwrap() == Player::C
+        }).map(|(node_id, node)| {
+            (node_id.clone(), {
+                edges_of(node).unwrap().iter().map(|(action_id, _)| {
+                    (action_id.clone(), 1.0)
+                }).collect()
+            })
+        }).collect()
+    }
+}
+
 pub mod strategy {
     use super::*;
     pub fn ones(rule: &Rule, player: &Player) -> Strategy {
@@ -176,6 +224,11 @@ pub mod profile {
             _ => None
         }
     }
+    pub fn uniform(rule: &Rule) -> Profile {
+        profile::from_strt(
+            &Player::P1, strategy::uniform(&rule, &Player::P1),
+            &Player::P2, strategy::uniform(&rule, &Player::P2)).unwrap()
+    }
     pub fn from_strt(p1: &Player, p1_strt: Strategy, p2: &Player, p2_strt: Strategy) -> Option<Profile> {
         if *p1 == Player::C || *p2 == Player::C || *p1 == *p2 {
             return None
@@ -211,6 +264,7 @@ pub mod solver {
                         }
                     }
                 }
+                // TODO: refactor
                 sum
             },
         }
@@ -222,8 +276,7 @@ pub mod solver {
             &myself, strategy::ones(rule, &myself),
             &opponent,  opp_strt).unwrap();
 
-        let mut terminal_probs: BTreeMap<NodeId, Value> = BTreeMap::new();
-        calc_terminal_probs(&mut terminal_probs, &rule, &prof, &rule.root, 1.0);
+        let terminal_probs = calc_terminal_probs(&rule, &prof);
 
         let best_action = |vals: &BTreeMap<NodeId, Value>, info_set_id: &InformationSetId| -> ActionId {                
             assert_eq!(myself, rule.player_by_info_set[&info_set_id]);
@@ -280,21 +333,27 @@ pub mod solver {
         (best_strt, vals[&rule.root])
     }
 
-    fn calc_terminal_probs(terminal_probs: &mut BTreeMap<NodeId, Value>, rule: &Rule, profile: &Profile, node_id: &NodeId, prob: Value) {
+    fn calc_terminal_probs(rule: &Rule, prof: &Profile) -> BTreeMap<NodeId, Value> {
+        let mut terminal_probs: BTreeMap<NodeId, Value> = BTreeMap::new();
+        calc_terminal_probs_inner(&mut terminal_probs, &rule, &prof, &rule.root, 1.0);
+        terminal_probs
+    }
+
+    fn calc_terminal_probs_inner(terminal_probs: &mut BTreeMap<NodeId, Value>, rule: &Rule, prof: &Profile, node_id: &NodeId, prob: Value) {
         match &rule.nodes[&node_id] {
             Node::Terminal{ .. } => {
                 terminal_probs.insert(*node_id, prob);
             },                
             Node::NonTerminal{ player, edges} => {
-                for (action, child_id) in edges.iter() {
-                    calc_terminal_probs(
-                        terminal_probs, rule, profile, child_id, 
+                for (action_id, child_id) in edges.iter() {
+                    calc_terminal_probs_inner(
+                        terminal_probs, rule, prof, child_id, 
                         prob * match player {
                             Player::P1 | Player::P2 => {
-                                profile[player][&rule.info_set_id_by_node[&node_id]][action]
+                                prof[player][&rule.info_set_id_by_node[&node_id]][action_id]
                             },
                             Player::C => {
-                                rule.transition[&node_id][action]
+                                rule.transition[&node_id][action_id]
                             }
                         });
                 }
@@ -306,5 +365,206 @@ pub mod solver {
         let (_, best_resp_to_p2) = calc_best_resp_against_to(rule, &Player::P2, prof[&Player::P2].clone());
         let (_, best_resp_to_p1) = calc_best_resp_against_to(rule, &Player::P1, prof[&Player::P1].clone());
         best_resp_to_p2 - best_resp_to_p1
+    }
+}
+
+
+pub mod cfr {
+    use approx_eq::assert_approx_eq;
+
+    use super::*;
+
+    type RegretType = BTreeMap<InformationSetId, BTreeMap<ActionId, Value>>;
+
+    fn positive_part(v: BTreeMap<ActionId, Value>) -> BTreeMap<ActionId, Value> {
+        v.into_iter().map(|(action_id, prob)| 
+            (action_id, if prob < 0.0 { 0.0 } else { prob })
+        ).collect()
+    }
+    fn normalized(v: BTreeMap<ActionId, Value>) -> BTreeMap<ActionId, Value> {
+        let norm: Value = v.iter().map(|(_, prob)| prob).sum();
+        let len = v.len() as Value;
+        v.into_iter().map(|(action_id, prob)| 
+            (action_id, if norm.abs() < 1e-9 { 1.0 / len } else { prob / norm })
+        ).collect()
+    }
+
+
+    pub fn calc_nash_strt(rule: &Rule) -> Profile {
+        let mut regret: BTreeMap<Player, RegretType> = rule.info_partitions.iter().map(|(player, partition)| {
+            (player.clone(), partition.iter().map(|(info_id, _)| {
+                (info_id.clone(), rule.actions_by_info_set[&info_id].iter().map(|action_id| {
+                    (action_id.clone(), 0.0)
+                }).collect())
+            }).collect())
+        }).collect();
+
+        let mut latest_prof: Profile = profile::uniform(&rule);
+        let mut avg_prof = latest_prof.clone();
+
+
+        println!("exploitabilyty: {}", solver::calc_exploitability(&rule, &avg_prof));
+
+        let steps = 10000;
+        for t in 1..steps+1 {
+            regret = regret.iter().map(|(myself, reg)| {
+                (myself.clone(), {                        
+                    let prob_to_reach_node_except_myself = calc_prob_to_reach_node_except(rule, &latest_prof, myself);
+                    // println!("prob_to_reach_node_except_myself: {:?}", prob_to_reach_node_except_myself);
+
+                    let ev_under_node_for_myself = calc_ev_under_node_for_player(rule, &latest_prof, myself);
+                    // println!("ev_under_node_for_myself: {:?}", ev_under_node_for_myself);
+
+                    let s: RegretType = rule.info_partitions[myself].iter().map(|(info_id, node_ids)| {
+                        (info_id.clone(), rule.actions_by_info_set[info_id].iter().map(|action_id| {
+                            (action_id.clone(), node_ids.iter().map(|node_id| {
+                                prob_to_reach_node_except_myself[node_id] * match &rule.nodes[node_id] {
+                                    Node::NonTerminal{ edges, .. } => {
+                                        ev_under_node_for_myself[&edges[action_id]]
+                                    },
+                                    Node::Terminal{ .. } => panic!()
+                                    // TODO: refactor
+                                }
+                            }).sum())
+                        }).collect())
+                    }).collect();
+                    // println!("s: {:?}", s);
+
+                    let u: BTreeMap<InformationSetId, Value> = rule.info_partitions[myself].iter().map(|(info_id, _)| {
+                        (info_id.clone(), rule.actions_by_info_set[info_id].iter().map(|action_id| {
+                            latest_prof[myself][info_id][action_id] * s[info_id][action_id]
+                        }).sum())
+                    }).collect();
+                    // println!("u: {:?}", u);
+
+                    let t = t as Value;
+                    rule.info_partitions[myself].iter().map(|(info_id, _)| {
+                        (info_id.clone(), rule.actions_by_info_set[info_id].iter().map(|action_id| {
+                            (action_id.clone(), (t * reg[info_id][action_id] + s[info_id][action_id] - u[info_id]) / (t + 1.0))
+                        }).collect())
+                    }).collect()
+                })
+            }).collect();
+
+            // println!("regret: {:?}", regret);
+
+            // update latest_prof
+            latest_prof = regret.iter().map(|(myself, reg)| {
+                (myself.clone(), {
+                    reg.iter().map(|(info_id, dist)| {
+                        (info_id.clone(), normalized(positive_part(dist.clone()).clone()))
+                    }).collect()
+                })
+            }).collect();
+            // println!("latest_prof: {:?}", latest_prof);
+
+
+            avg_prof = [Player::P1, Player::P2].iter().map(|myself| {
+                let latest_prob_to_reach_info_set_only_myself = calc_prob_to_reach_info_set_only(rule, &latest_prof, myself);
+                let avg_prob_to_reach_info_set_only_myself = calc_prob_to_reach_info_set_only(rule, &avg_prof, myself);
+                // println!("latest_prob_to: {:?}", latest_prob_to_reach_info_set);
+                // println!("avg_prob_to: {:?}", avg_prob_to_reach_info_set);
+                (myself.clone(), {
+                    rule.info_partitions[myself].iter().map(|(info_id, _)| {                            
+                        (info_id.clone(), {
+                            rule.actions_by_info_set[info_id].iter().map(|action_id| {
+                                (action_id.clone(), {
+                                    let latest = latest_prob_to_reach_info_set_only_myself[info_id];
+                                    let total = avg_prob_to_reach_info_set_only_myself[info_id] * t as Value;
+                                    (avg_prof[myself][info_id][action_id] * total +
+                                    latest_prof[myself][info_id][action_id] * latest) / (latest + total)
+                                })
+                            }).collect()
+                        })
+                    }).collect()
+                })
+            }).collect();
+            // println!("avg_prof: {:?}", avg_prof);
+
+            println!("exploitabilyty: {}", solver::calc_exploitability(rule, &avg_prof));
+        }
+
+        avg_prof
+    }
+
+    fn calc_prob_to_reach_info_set_only(rule: &Rule, prof: &Profile, myself: &Player) -> BTreeMap<InformationSetId, Value> {
+        let probs = calc_prob_to_reach_node_only(rule, prof, myself);
+        rule.info_partitions[myself].iter().map(|(info_id, nodes)| {
+            (info_id.clone(), 
+                nodes.iter().map(|node_id| probs[node_id]).sum()
+            )
+        }).collect()
+    }
+
+    // fn calc_prob_to_reach_node(rule: &Rule, prof: &Profile) -> BTreeMap<NodeId, Value> {
+    //     let mut probs: BTreeMap<NodeId, Value> = BTreeMap::new();
+    //     calc_prob_to_reach_node_inner(&mut probs, rule, prof, &rule.transition, &rule.root, 1.0);
+    //     probs
+    // }
+
+    fn calc_prob_to_reach_node_only(rule: &Rule, prof: &Profile, myself: &Player) -> BTreeMap<NodeId, Value> {
+        let mut probs: BTreeMap<NodeId, Value> = BTreeMap::new();
+        let opponent = opponent_of(myself).unwrap();
+        calc_prob_to_reach_node_inner(&mut probs, rule, &profile::from_strt(
+            myself, prof[myself].clone(), &opponent, strategy::ones(rule, &opponent)
+        ).unwrap(), &transition::ones(rule), &rule.root, 1.0);
+        probs
+    }
+
+    fn calc_prob_to_reach_node_except(rule: &Rule, prof: &Profile, myself: &Player) -> BTreeMap<NodeId, Value> {
+        let mut probs: BTreeMap<NodeId, Value> = BTreeMap::new();
+        let opponent = opponent_of(myself).unwrap();
+        calc_prob_to_reach_node_inner(&mut probs, rule, &profile::from_strt(
+            myself, strategy::ones(rule, myself), &opponent, prof[&opponent].clone()
+        ).unwrap(), &rule.transition, &rule.root, 1.0);
+        probs
+    }
+
+    fn calc_prob_to_reach_node_inner(probs: &mut BTreeMap<NodeId, Value>, rule: &Rule, prof: &Profile, trans: &Transition, node_id: &NodeId, prob: Value) {
+        probs.insert(*node_id, prob);
+        if let Node::NonTerminal{ player, edges } = &rule.nodes[node_id] {
+            for (action_id, child_id) in edges {
+                calc_prob_to_reach_node_inner(probs, rule, prof, trans, child_id, prob * match player {
+                    Player::P1 | Player::P2 => {
+                        prof[player][&rule.info_set_id_by_node[node_id]][action_id]
+                    },
+                    Player::C => {
+                        trans[node_id][action_id]
+                    }
+                });
+            }
+        }
+    }
+
+    fn calc_ev_under_node_for_player(rule: &Rule, prof: &Profile, myself: &Player) -> BTreeMap<NodeId, Value> {
+        let mut ev: BTreeMap<NodeId, Value> = BTreeMap::new();
+        calc_ev_under_node_inner_for_player(&mut ev, rule, prof, &rule.root, myself);
+        ev
+    }
+    fn calc_ev_under_node_inner_for_player(evs: &mut BTreeMap<NodeId, Value>, rule: &Rule, prof: &Profile, node_id: &NodeId, myself: &Player) {
+        match &rule.nodes[node_id] {
+            Node::Terminal{ value } => {
+                evs.insert(*node_id, *value as Value * match myself {
+                    Player::P1 => 1.0,
+                    Player::P2 => -1.0,
+                    Player::C => panic!()
+                    // TODO: refactor
+                });
+            },
+            Node::NonTerminal{ player, edges } => {
+                let sum: Value = edges.iter().map(|(action_id, child_id)| {
+                    calc_ev_under_node_inner_for_player(evs, rule, prof, child_id, myself);
+                    evs[child_id] * match player {
+                        Player::P1 | Player::P2 => {
+                            prof[player][&rule.info_set_id_by_node[node_id]][action_id]
+                        },
+                        Player::C => {
+                            rule.transition[node_id][action_id]
+                        }
+                    }
+                }).sum();
+                evs.insert(*node_id, sum);
+            }
+        }
     }
 }
