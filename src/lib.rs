@@ -402,7 +402,7 @@ pub mod cfr {
     }
 
 
-    pub fn calc_nash_strt(rule: &Rule) -> Profile {
+    pub fn calc_nash_strt(rule: &Rule, init_prof: Profile, step: usize) -> Profile {
         let mut regret: BTreeMap<Player, RegretType> = rule.info_partitions.iter().map(|(player, partition)| {
             (player.clone(), partition.iter().map(|(info_set_id, _)| {
                 (info_set_id.clone(), rule.actions_by_info_set[info_set_id].iter().map(|action_id| {
@@ -411,7 +411,7 @@ pub mod cfr {
             }).collect())
         }).collect();
 
-        let mut latest_prof: Profile = profile::uniform(rule);
+        let mut latest_prof = init_prof;
         let mut avg_prof = latest_prof.clone();
 
 
@@ -428,9 +428,7 @@ pub mod cfr {
             4.0 * max / t.sqrt()
         };
 
-        let steps = 100000;
-
-        for t in 1..steps+1 {
+        for t in 1..step+1 {
             regret = regret.iter().map(|(myself, reg)| {
                 (myself.clone(), {                        
                     let prob_to_reach_node_except_myself = calc_prob_to_reach_node_except(rule, &latest_prof, myself);
