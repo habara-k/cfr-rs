@@ -261,6 +261,20 @@ pub mod profile {
         prof.insert(b.clone(), b_strt);
         Some(prof)
     }
+
+    pub fn prob_to_take_action(rule: &Rule, prof: &Profile, node_id: &NodeId, action_id: &ActionId) -> Option<Value> {
+        match &rule.nodes[node_id] {
+            Node::Terminal{ .. } => {
+                None
+            },
+            Node::NonTerminal{ player, .. } => {
+                Some(match player {
+                    Player::P1 | Player::P2 => prof[player][&rule.info_set_id_by_node[node_id]][action_id],
+                    Player::C => rule.transition[node_id][action_id],
+                })
+            },
+        }
+    }
 }
 
 pub mod solver {
@@ -270,21 +284,15 @@ pub mod solver {
         calc_ev_inner(rule, prof, &rule.root, 1.0)
     }
 
-    fn calc_ev_inner(rule: &Rule, profile: &Profile, node_id: &NodeId, prob: Value) -> Value {            
+    fn calc_ev_inner(rule: &Rule, prof: &Profile, node_id: &NodeId, prob: Value) -> Value {            
         match &rule.nodes[node_id] {
             Node::Terminal{ value } => {                    
                 *value as Value * prob
             },
-            Node::NonTerminal{ player, edges} => {
+            Node::NonTerminal{ edges, .. } => {
                 edges.iter().map(|(action_id, child_id)| {
-                    calc_ev_inner(rule, profile, child_id,  prob) * match player {
-                        Player::P1 | Player::P2 => {
-                            profile[player][&rule.info_set_id_by_node[node_id]][action_id]
-                        },
-                        Player::C => {
-                            rule.transition[node_id][action_id]
-                        }
-                    }
+                    calc_ev_inner(rule, prof, child_id,  prob) * profile::prob_to_take_action(
+                        rule, prof, node_id, action_id).unwrap()
                 }).sum()
             },
         }
@@ -350,18 +358,12 @@ pub mod solver {
             Node::Terminal{ .. } => {
                 probs.insert(*node_id, prob);
             },                
-            Node::NonTerminal{ player, edges} => {
+            Node::NonTerminal{ edges, .. } => {
                 for (action_id, child_id) in edges.iter() {
                     calc_prob_to_reach_terminal_node_inner(
                         probs, rule, prof, child_id, 
-                        prob * match player {
-                            Player::P1 | Player::P2 => {
-                                prof[player][&rule.info_set_id_by_node[node_id]][action_id]
-                            },
-                            Player::C => {
-                                rule.transition[node_id][action_id]
-                            }
-                        });
+                        prob * profile::prob_to_take_action(rule, prof, node_id, action_id).unwrap()
+                        );
                 }
             }
         }
@@ -370,7 +372,24 @@ pub mod solver {
     pub fn calc_exploitability(rule: &Rule, prof: &Profile) -> Value {
         let (_, best_resp_to_p2) = calc_best_resp_against_to(rule, &Player::P2, prof[&Player::P2].clone());
         let (_, best_resp_to_p1) = calc_best_resp_against_to(rule, &Player::P1, prof[&Player::P1].clone());
-        best_resp_to_p2 - best_resp_to_p1
+        (best_resp_to_p2 - best_resp_to_p1) / 2.0
+    }
+}
+
+pub mod visualizer {
+    use super::*;
+    pub fn print(rule: &Rule, prof: &Profile) {
+        print_inner(rule, prof, &rule.root, "".to_string());
+    }
+
+    fn print_inner(rule: &Rule, prof: &Profile, node_id: &NodeId, margin: String) {
+        if let Node::NonTerminal{ edges, .. } = &rule.nodes[node_id] {
+            for (i, (action_id, child_id)) in edges.iter().enumerate() {
+                println!("{}|- {} ({})", &margin, rule.actions[action_id], profile::prob_to_take_action(rule, prof, node_id, action_id).unwrap());
+                print_inner(rule, prof, child_id, margin.clone() +
+                     if i+1 == edges.len() { "   " } else { "|  " });
+            }
+        }
     }
 }
 
@@ -386,13 +405,25 @@ pub mod cfr {
         ).collect()
     }
     fn normalized(v: BTreeMap<ActionId, Value>) -> BTreeMap<ActionId, Value> {
+        let eps = 1e-9;
         let norm: Value = v.iter().map(|(_, prob)| prob).sum();
         let len = v.len() as Value;
         v.into_iter().map(|(action_id, prob)| 
-            (action_id, if norm.abs() < 1e-9 { 1.0 / len } else { prob / norm })
+            (action_id, if norm.abs() < eps { 1.0 / len } else { prob / norm })
         ).collect()
     }
 
+    #[allow(dead_code)]
+    fn exploitability_upper_bound(rule: &Rule, t: usize) -> Value {
+        let a1 = rule.info_partitions[&Player::P1].len() as Value * 
+            (rule.max_action_size_of[&Player::P1] as Value).sqrt();
+        let a2 = rule.info_partitions[&Player::P2].len() as Value *
+            (rule.max_action_size_of[&Player::P2] as Value).sqrt();
+
+        let max = if a1 < a2 { a2 } else { a1 };
+
+        2.0 * max / (t as Value).sqrt()
+    }
 
     pub fn calc_nash_strt(rule: &Rule, init_prof: Profile, step: usize) -> Profile {
         let mut regret: BTreeMap<Player, RegretType> = rule.info_partitions.iter().map(|(player, partition)| {
@@ -407,17 +438,6 @@ pub mod cfr {
         let mut avg_prof = latest_prof.clone();
 
         println!("exploitabilyty: {}", solver::calc_exploitability(rule, &avg_prof));
-
-        let exploitability_upper_bound = |t: Value| {
-            let a1 = rule.info_partitions[&Player::P1].len() as Value * 
-                (rule.max_action_size_of[&Player::P1] as Value).sqrt();
-            let a2 = rule.info_partitions[&Player::P2].len() as Value * 
-                (rule.max_action_size_of[&Player::P2] as Value).sqrt();
-
-            let max = if a1 < a2 { a2 } else { a1 };
-
-            4.0 * max / t.sqrt()
-        };
 
         for t in 1..step+1 {
             regret = regret.iter().map(|(myself, reg)| {
@@ -481,9 +501,9 @@ pub mod cfr {
             }).collect();
 
             if t % 1000 == 0 {
-                println!("exploitabilyty: {} / ub: {}",
-                    solver::calc_exploitability(rule, &avg_prof),
-                    exploitability_upper_bound(t as Value)
+                println!("step: {}, exploitabilyty: {}",
+                    t,
+                    solver::calc_exploitability(rule, &avg_prof)
                 );
             }
         }
@@ -520,16 +540,11 @@ pub mod cfr {
 
     fn calc_prob_to_reach_node_inner(probs: &mut BTreeMap<NodeId, Value>, rule: &Rule, prof: &Profile, trans: &Transition, node_id: &NodeId, prob: Value) {
         probs.insert(*node_id, prob);
-        if let Node::NonTerminal{ player, edges } = &rule.nodes[node_id] {
+        if let Node::NonTerminal{ edges, .. } = &rule.nodes[node_id] {
             for (action_id, child_id) in edges {
-                calc_prob_to_reach_node_inner(probs, rule, prof, trans, child_id, prob * match player {
-                    Player::P1 | Player::P2 => {
-                        prof[player][&rule.info_set_id_by_node[node_id]][action_id]
-                    },
-                    Player::C => {
-                        trans[node_id][action_id]
-                    }
-                });
+                calc_prob_to_reach_node_inner(probs, rule, prof, trans, child_id, 
+                    prob * profile::prob_to_take_action(rule, prof, node_id, action_id).unwrap()
+                );
             }
         }
     }
@@ -544,17 +559,10 @@ pub mod cfr {
             Node::Terminal{ value } => {
                 *value as Value * sign_of(myself).unwrap()
             },
-            Node::NonTerminal{ player, edges } => {
+            Node::NonTerminal{ edges, .. } => {
                 edges.iter().map(|(action_id, child_id)| {
                      calc_ev_under_node_inner_for_player(evs, rule, prof, child_id, myself);
-                     evs[child_id] * match player {
-                         Player::P1 | Player::P2 => {
-                             prof[player][&rule.info_set_id_by_node[node_id]][action_id]
-                         },
-                         Player::C => {
-                             rule.transition[node_id][action_id]
-                         }
-                     }
+                     evs[child_id] * profile::prob_to_take_action(rule, prof, node_id, action_id).unwrap()
                 }).sum()
             }
         };
