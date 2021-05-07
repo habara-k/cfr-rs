@@ -372,7 +372,7 @@ pub mod solver {
     pub fn calc_exploitability(rule: &Rule, prof: &Profile) -> Value {
         let (_, best_resp_to_p2) = calc_best_resp_against_to(rule, &Player::P2, prof[&Player::P2].clone());
         let (_, best_resp_to_p1) = calc_best_resp_against_to(rule, &Player::P1, prof[&Player::P1].clone());
-        best_resp_to_p2 - best_resp_to_p1
+        (best_resp_to_p2 - best_resp_to_p1) / 2.0
     }
 }
 
@@ -413,6 +413,18 @@ pub mod cfr {
         ).collect()
     }
 
+    #[allow(dead_code)]
+    fn exploitability_upper_bound(rule: &Rule, t: usize) -> Value {
+        let a1 = rule.info_partitions[&Player::P1].len() as Value * 
+            (rule.max_action_size_of[&Player::P1] as Value).sqrt();
+        let a2 = rule.info_partitions[&Player::P2].len() as Value *
+            (rule.max_action_size_of[&Player::P2] as Value).sqrt();
+
+        let max = if a1 < a2 { a2 } else { a1 };
+
+        2.0 * max / (t as Value).sqrt()
+    }
+
     pub fn calc_nash_strt(rule: &Rule, init_prof: Profile, step: usize) -> Profile {
         let mut regret: BTreeMap<Player, RegretType> = rule.info_partitions.iter().map(|(player, partition)| {
             (player.clone(), partition.iter().map(|(info_set_id, _)| {
@@ -426,17 +438,6 @@ pub mod cfr {
         let mut avg_prof = latest_prof.clone();
 
         println!("exploitabilyty: {}", solver::calc_exploitability(rule, &avg_prof));
-
-        let exploitability_upper_bound = |t: Value| {
-            let a1 = rule.info_partitions[&Player::P1].len() as Value * 
-                (rule.max_action_size_of[&Player::P1] as Value).sqrt();
-            let a2 = rule.info_partitions[&Player::P2].len() as Value * 
-                (rule.max_action_size_of[&Player::P2] as Value).sqrt();
-
-            let max = if a1 < a2 { a2 } else { a1 };
-
-            4.0 * max / t.sqrt()
-        };
 
         for t in 1..step+1 {
             regret = regret.iter().map(|(myself, reg)| {
@@ -500,9 +501,9 @@ pub mod cfr {
             }).collect();
 
             if t % 1000 == 0 {
-                println!("exploitabilyty: {} / ub: {}",
-                    solver::calc_exploitability(rule, &avg_prof),
-                    exploitability_upper_bound(t as Value)
+                println!("step: {}, exploitabilyty: {}",
+                    t,
+                    solver::calc_exploitability(rule, &avg_prof)
                 );
             }
         }
