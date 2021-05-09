@@ -1,11 +1,11 @@
 # CFR-rs
 
-CFR-rs is a rust implementation of Counterfacutual Regret Minimization[1]. 
+CFR-rs is a rust implementation of Counterfactual Regret Minimization[1]. 
 
 The library calculates ε-Nash equilibrium of **all** Imperfect-Information Extensive-Form Game satisfying 
-- two person
-- zero sum
-- perfect recall
+- two-person
+- zero-sum
+- perfect-recall
 - **relatively small**
 
 ## Quick Start
@@ -29,8 +29,8 @@ The game value (the score that both players can achieve no matter what strategy 
 
 The strategy calculated above guarantees that
 
-- player1 can achieve score `-0.055643...` at worst.
-- player2 can achieve score `-0.055206...` at worst.
+- player1 can achieve a score of `-0.055643...` at worst.
+- player2 can achieve a score of `-0.055206...` at worst.
 
 ## Licence
 
