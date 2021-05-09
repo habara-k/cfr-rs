@@ -1,5 +1,5 @@
 extern crate cfr_rs;
-use cfr_rs::*;
+use cfr_rs::{rule, player::Player, profile, solver, visualizer, cfr};
 use std::time::Instant;
 
 #[macro_use]
@@ -22,7 +22,7 @@ fn main() {
 
     trace!("start: main");
 
-    let rule = Rule::from_name(&std::env::args().nth(1).expect("no rule given")).expect("invalid rule");
+    let rule = rule::from_name(&std::env::args().nth(1).expect("no rule given"));
     let step = std::env::args().nth(2).expect("no step given").parse::<usize>().expect("step must be usize");
     let uniform_prof = profile::uniform(&rule);
 
