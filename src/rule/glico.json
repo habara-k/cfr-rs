@@ -1,0 +1,105 @@
+{
+  "actions": {
+    "0": "R",
+    "1": "P",
+    "2": "S"
+  },
+  "nodes": {
+    "0": {
+      "NonTerminal": {
+        "player": "P1",
+        "edges": {
+          "0": 1,
+          "1": 2,
+          "2": 3
+        }
+      }
+    },
+    "1": {
+      "NonTerminal": {
+        "player": "P2",
+        "edges": {
+          "0": 4,
+          "1": 5,
+          "2": 6
+        }
+      }
+    },
+    "2": {
+      "NonTerminal": {
+        "player": "P2",
+        "edges": {
+          "0": 7,
+          "1": 8,
+          "2": 9
+        }
+      }
+    },
+    "3": {
+      "NonTerminal": {
+        "player": "P2",
+        "edges": {
+          "0": 10,
+          "1": 11,
+          "2": 12
+        }
+      }
+    },
+    "4": {
+      "Terminal": {
+        "value": 0
+      }
+    },
+    "5": {
+      "Terminal": {
+        "value": -6
+      }
+    },
+    "6": {
+      "Terminal": {
+        "value": 3
+      }
+    },
+    "7": {
+      "Terminal": {
+        "value": 6
+      }
+    },
+    "8": {
+      "Terminal": {
+        "value": 0 
+      }
+    },
+    "9": {
+      "Terminal": {
+        "value": -6
+      }
+    },
+    "10": {
+      "Terminal": {
+        "value": -3
+      }
+    },
+    "11": {
+      "Terminal": {
+        "value": 6 
+      }
+    },
+    "12": {
+      "Terminal": {
+        "value": 0
+      }
+    }
+  },
+  "root": 0,
+  "info_partitions": {
+    "P1": {
+      "0": [0]
+    },
+    "P2": {
+      "1": [1,2,3]
+    }
+  },
+  "transition": {
+  }
+}

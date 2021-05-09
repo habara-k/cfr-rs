@@ -119,6 +119,13 @@ impl Rule {
                 rule.build();
                 Some(rule)
             },
+            "glico" => {
+                let mut rule: Rule = serde_json::from_str(
+                    &fs::read_to_string("src/rule/glico.json").unwrap()
+                ).unwrap();
+                rule.build();
+                Some(rule)
+            },
             _ => None
         } 
     }
@@ -309,6 +316,12 @@ pub mod profile {
                 ).unwrap();
                 Some(prof)
             },
+            "glico_nash" => {
+                let prof: Profile = serde_json::from_str(
+                    &fs::read_to_string("src/profile/glico_nash.json").unwrap()
+                ).unwrap();
+                Some(prof)
+            },
             _ => None
         }
     }
@@ -370,6 +383,7 @@ pub mod solver {
             opponent,  opp_strt).unwrap();
 
         let prob_to_reach_terminal_node = calc_prob_to_reach_terminal_node(rule, &prof);
+        trace!("prob_to_reach_terminal_node: {:?}", prob_to_reach_terminal_node);
 
         let best_action_at = |vals: &BTreeMap<NodeId, Value>, info_set_id: &InformationSetId| -> ActionId {                
             assert_eq!(myself, rule.player_by_info_set[info_set_id]);
@@ -384,6 +398,7 @@ pub mod solver {
         };
 
         let ord = rule.bfs_ord();
+        trace!("ord: {:?}", ord);
         let mut vals: BTreeMap<NodeId, Value> = BTreeMap::new();
         let mut best_actions: BTreeMap<InformationSetId, ActionId> = BTreeMap::new();
         let mut best_strt: Strategy = strategy::zeros(&rule, &myself);
@@ -408,6 +423,8 @@ pub mod solver {
                 }
             }
         }
+        trace!("vals: {:?}", vals);
+        trace!("best_action: {:?}", best_actions);
 
         (best_strt, vals[&rule.root])
     }
