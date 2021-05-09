@@ -3,9 +3,10 @@
 CFR-rs is a rust implementation of Counterfactual Regret Minimization[1]. 
 
 The library calculates ε-Nash equilibrium of **all** Imperfect-Information Extensive-Form Game satisfying 
+- finite
 - two-person
 - zero-sum
-- perfect-recall
+- perfect recall
 - **relatively small**
 
 ## Quick Start
