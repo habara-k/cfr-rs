@@ -25,7 +25,7 @@ $ cargo run --release kuhn 1000000
 
 The library calculates a strategy in `84.76 ±　0.35` sec.
 
-Game value (the score that both players can achieve no matter what strategy the other player uses) of Kuhn poker is `-1/18 = -0.055555...`.
+The game value (the score that both players can achieve no matter what strategy the other player uses) of Kuhn poker is `-1/18 = -0.055555...`.
 
 The strategy calculated above guarantees that
 
