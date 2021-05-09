@@ -15,7 +15,7 @@ You can calculate an ε-Nash equilibrium strategy for [Kuhn poker](https://en.wi
 $ cargo run --release kuhn 1000000
 ```
 
-You can also calculate an ε-Nash equilibrium strategy for [Glico(Weighted Rock Paper Scissors](https://ja.wikipedia.org/wiki/%E3%82%B0%E3%83%AA%E3%82%B3_(%E9%81%8A%E3%81%B3)) :)
+You can also calculate an ε-Nash equilibrium strategy for [Glico(Weighted Rock Paper Scissors)](https://ja.wikipedia.org/wiki/%E3%82%B0%E3%83%AA%E3%82%B3_(%E9%81%8A%E3%81%B3)) :)
 ```
 $ cargo run --release glico 1000000
 ```
