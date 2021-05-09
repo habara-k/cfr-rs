@@ -3,6 +3,10 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use std::fs;
 use ord_subset::OrdSubsetIterExt;
+use indicatif::ProgressIterator;
+
+#[macro_use]
+extern crate log;
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, Debug)]
 pub enum Player {
@@ -101,6 +105,8 @@ pub struct Rule {
     node_value_scale: NodeValue,
     #[serde(skip_deserializing)]
     max_action_size_of: BTreeMap<Player, usize>,
+    #[serde(skip_deserializing)]
+    history: BTreeMap<NodeId, Vec<ActionId>>
 }
 
 impl Rule {
@@ -118,6 +124,16 @@ impl Rule {
     }
 
     fn build(&mut self) {
+        self.build_info_set_id_by_node();
+        self.build_actions_by_info_set();
+        self.build_player_by_info_set();
+        self.build_node_value_scale();
+        self.build_max_action_size_of();
+        self.build_history();
+    }
+
+    fn build_info_set_id_by_node(&mut self) {
+        trace!("start: build_info_set_id_by_node");
         for (_, partition) in self.info_partitions.iter() {                
             for (info_set_id, info_set) in partition.iter() {
                 for node_id in info_set.iter() {
@@ -125,18 +141,34 @@ impl Rule {
                 }
             }
         }
+        trace!("finish: build_info_set_id_by_node");
+    }
 
+    fn build_actions_by_info_set(&mut self) {
+        trace!("start: build_actions_by_info_set");
         for (_, partition) in self.info_partitions.iter() {                
             for (info_set_id, info_set) in partition.iter() {
                 for node_id in info_set.iter() {                        
-                    if let Node::NonTerminal{ player, edges} = &self.nodes[node_id] {
+                    if let Node::NonTerminal{ edges, .. } = &self.nodes[node_id] {
                         let actions: Vec<ActionId> = edges.keys().cloned().collect();
                         if self.actions_by_info_set.contains_key(info_set_id) {
                             assert_eq!(actions, self.actions_by_info_set[info_set_id]);
                         } else {
                             self.actions_by_info_set.insert(*info_set_id, actions);
                         }
+                    }
+                }
+            }
+        }
+        trace!("finish: build_actions_by_info_set");
+    }
 
+    fn build_player_by_info_set(&mut self) {
+        trace!("start: build_player_by_info_set");
+        for (_, partition) in self.info_partitions.iter() {                
+            for (info_set_id, info_set) in partition.iter() {
+                for node_id in info_set.iter() {                        
+                    if let Node::NonTerminal{ player, .. } = &self.nodes[node_id] {
                         if self.player_by_info_set.contains_key(info_set_id) {
                             assert_eq!(*player, self.player_by_info_set[info_set_id]);
                         } else {
@@ -146,7 +178,11 @@ impl Rule {
                 }
             }
         }
-        
+        trace!("finish: build_player_by_info_set");
+    }
+
+    fn build_node_value_scale(&mut self) {
+        trace!("start: build_node_value_scale");
         self.node_value_scale = {
             let iter = self.nodes.iter().filter(|&(_, node)| {
                 is_terminal(node)
@@ -155,7 +191,11 @@ impl Rule {
             });
             iter.clone().max().unwrap() - iter.min().unwrap()
         };
-        
+        trace!("finish: build_node_value_scale");
+    }
+
+    fn build_max_action_size_of(&mut self) {
+        trace!("start: build_max_action_size_of");
         self.max_action_size_of = [Player::P1, Player::P2].iter().map(|player| {
             (player.clone(), {
                 self.info_partitions[player].iter().map(|(info_set_id, _)| {
@@ -163,6 +203,31 @@ impl Rule {
                 }).max().unwrap()
             })
         }).collect();
+        trace!("finish: build_max_action_size_of");
+    }
+
+    fn build_history(&mut self) {
+        trace!("start: build_history");
+        let mut actions: Vec<ActionId> = Vec::new();
+        let mut history: BTreeMap<NodeId, Vec<ActionId>> = BTreeMap::new();
+        self.build_history_inner(&self.root, &mut actions, &mut history);
+        self.history = history;
+        trace!("finish: build_history");
+    }
+
+    fn build_history_inner(&self, node_id: &NodeId, actions: &mut Vec<ActionId>, history: &mut BTreeMap<NodeId, Vec<ActionId>>) {
+        history.insert(node_id.clone(), actions.clone());
+        if let Node::NonTerminal { edges, .. } = &self.nodes[node_id] {
+            for (action_id, child_id) in edges.iter() {
+                actions.push(action_id.clone());
+                self.build_history_inner(child_id, actions, history);
+                actions.pop();
+            }
+        }
+    }
+
+    pub fn info_set_by_id(&self, info_set_id: &InformationSetId) -> &InformationSet {
+        &self.info_partitions[&self.player_by_info_set[info_set_id]][info_set_id]
     }
 
     pub fn bfs_ord(&self) -> Vec<NodeId> {
@@ -372,23 +437,54 @@ pub mod solver {
     pub fn calc_exploitability(rule: &Rule, prof: &Profile) -> Value {
         let (_, best_resp_to_p2) = calc_best_resp_against_to(rule, &Player::P2, prof[&Player::P2].clone());
         let (_, best_resp_to_p1) = calc_best_resp_against_to(rule, &Player::P1, prof[&Player::P1].clone());
-        (best_resp_to_p2 - best_resp_to_p1) / 2.0
+        best_resp_to_p2 - best_resp_to_p1
     }
 }
 
 pub mod visualizer {
     use super::*;
-    pub fn print(rule: &Rule, prof: &Profile) {
-        print_inner(rule, prof, &rule.root, "".to_string());
+
+    pub fn print_node(rule: &Rule, node_id: &NodeId) {
+        print!("[");
+        for (i, action_id) in rule.history[node_id].iter().enumerate() {
+            if i+1 == rule.history[node_id].len() {
+                print!("{}", rule.actions[action_id]);
+            } else {
+                print!("{}, ", rule.actions[action_id]);
+            }
+        }
+        print!("]")
     }
 
-    fn print_inner(rule: &Rule, prof: &Profile, node_id: &NodeId, margin: String) {
-        if let Node::NonTerminal{ edges, .. } = &rule.nodes[node_id] {
-            for (i, (action_id, child_id)) in edges.iter().enumerate() {
-                println!("{}|- {} ({})", &margin, rule.actions[action_id], profile::prob_to_take_action(rule, prof, node_id, action_id).unwrap());
-                print_inner(rule, prof, child_id, margin.clone() +
-                     if i+1 == edges.len() { "   " } else { "|  " });
+    pub fn print_info_set(rule: &Rule, info_set_id: &InformationSetId) {
+        println!("[");
+        for node_id in rule.info_set_by_id(info_set_id).iter() {
+            print!("    ");
+            print_node(rule, node_id);
+            println!(",");
+        }
+        print!("  ]");
+    }
+
+    pub fn print_dist(rule: &Rule, dist: &Distribution) {
+        println!("{{");
+        for (action_id, prob) in dist.iter() {
+            println!("    {}: {}", rule.actions[action_id], prob);
+        }
+        print!("  }}");
+    }
+
+    pub fn print_prof(rule: &Rule, prof: &Profile) {
+        for player in [Player::P1, Player::P2].iter() {
+            println!("{:?}: {{", player);
+            for (info_set_id, dist) in prof[player].iter() {
+                print!("  ");
+                print_info_set(rule, info_set_id);
+                print!(": ");
+                print_dist(rule, dist);
+                println!(",");
             }
+            println!("}}");
         }
     }
 }
@@ -437,9 +533,7 @@ pub mod cfr {
         let mut latest_prof = init_prof;
         let mut avg_prof = latest_prof.clone();
 
-        println!("exploitabilyty: {}", solver::calc_exploitability(rule, &avg_prof));
-
-        for t in 1..step+1 {
+        for t in (1..step+1).progress() {
             regret = regret.iter().map(|(myself, reg)| {
                 (myself.clone(), {                        
                     let prob_to_reach_node_except_myself = calc_prob_to_reach_node_except(rule, &latest_prof, myself);
@@ -499,13 +593,6 @@ pub mod cfr {
                     }).collect()
                 })
             }).collect();
-
-            if t % 1000 == 0 {
-                println!("step: {}, exploitabilyty: {}",
-                    t,
-                    solver::calc_exploitability(rule, &avg_prof)
-                );
-            }
         }
 
         avg_prof

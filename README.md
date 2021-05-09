@@ -8,19 +8,29 @@ The library calculates ε-Nash equilibrium of **all** Imperfect-Information Exte
 - perfect recall
 - **relatively small**
 
+## Quick Start
+
+You can calculate a optimal strategy of [Kuhn poker](https://en.wikipedia.org/wiki/Kuhn_poker) in `1,000,000` steps.
+```
+$ cargo run --release kuhn 1000000
+```
+
 ## Bench
 
-[Kuhn poker](https://en.wikipedia.org/wiki/Kuhn_poker) is an extremely simplified form of poker.
+- Rule: [Kuhn poker](https://en.wikipedia.org/wiki/Kuhn_poker), an extremely simplified form of poker.
+- step: `1,000,000`
+- Environments:
+  - 3.2 GHz CPU
+  - 8 GB RAM
 
-Its game value (the score that both players can achieve no matter what strategy the other player uses.) is `-1/18 = -0.055555...`.
+The library calculates a strategy in `84.76 ±　0.35` sec.
 
-The library calculates a strategy with which 
+Game value (the score that both players can achieve no matter what strategy the other player uses) of Kuhn poker is `-1/18 = -0.055555...`.
 
-- player1 can achieve score `-0.055643...` 
-- player2 can achieve score `-0.055206...`
+The strategy calculated above guarantees that
 
-no matter what strategy the other player uses, in `1,000,000` steps, `75.711` sec, with 3.2 GHz CPU and 8GB RAM.
-
+- player1 can achieve score `-0.055643...` at worst.
+- player2 can achieve score `-0.055206...` at worst.
 
 ## Licence
 
