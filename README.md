@@ -10,7 +10,7 @@ The library calculates ε-Nash equilibrium of **all** Imperfect-Information Exte
 
 ## Quick Start
 
-You can calculate a optimal strategy of [Kuhn poker](https://en.wikipedia.org/wiki/Kuhn_poker) in `1,000,000` steps.
+You can calculate an ε-Nash equilibrium strategy of [Kuhn poker](https://en.wikipedia.org/wiki/Kuhn_poker) in `1,000,000` steps.
 ```
 $ cargo run --release kuhn 1000000
 ```
