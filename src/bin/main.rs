@@ -1,5 +1,5 @@
 extern crate cfr_rs;
-use cfr_rs::*;
+use cfr_rs::{*, player::Player};
 use std::time::Instant;
 
 #[macro_use]
