@@ -38,9 +38,9 @@ fn exploitability_upper_bound(rule: &Rule, t: usize) -> f64 {
 
 pub fn calc_nash_strt(rule: &Rule, init_prof: Profile, step: usize) -> Profile {
     let mut regret: BTreeMap<Player, RegretType> = rule.info_partitions.iter().map(|(player, partition)| {
-        (player.clone(), partition.iter().map(|(info_set_id, _)| {
-            (info_set_id.clone(), rule.actions_by_info_set[info_set_id].iter().map(|action_id| {
-                (action_id.clone(), 0.0)
+        (*player, partition.iter().map(|(info_set_id, _)| {
+            (*info_set_id, rule.actions_by_info_set[info_set_id].iter().map(|action_id| {
+                (*action_id, 0.0)
             }).collect())
         }).collect())
     }).collect();
@@ -50,14 +50,14 @@ pub fn calc_nash_strt(rule: &Rule, init_prof: Profile, step: usize) -> Profile {
 
     for t in (1..step+1).progress() {
         regret = regret.iter().map(|(myself, reg)| {
-            (myself.clone(), {                        
+            (*myself, {                        
                 let prob_to_reach_node_except_myself = calc_prob_to_reach_node_except(rule, &latest_prof, myself);
 
                 let ev_under_node_for_myself = calc_ev_under_node_for_player(rule, &latest_prof, myself);
 
                 let s: RegretType = rule.info_partitions[myself].iter().map(|(info_set_id, node_ids)| {
-                    (info_set_id.clone(), rule.actions_by_info_set[info_set_id].iter().map(|action_id| {
-                        (action_id.clone(), node_ids.iter().map(|node_id| {
+                    (*info_set_id, rule.actions_by_info_set[info_set_id].iter().map(|action_id| {
+                        (*action_id, node_ids.iter().map(|node_id| {
                             prob_to_reach_node_except_myself[node_id] * ev_under_node_for_myself[
                                 &rule.nodes[node_id].edges()[action_id]
                             ]
@@ -66,15 +66,15 @@ pub fn calc_nash_strt(rule: &Rule, init_prof: Profile, step: usize) -> Profile {
                 }).collect();
 
                 let u: BTreeMap<InformationSetId, f64> = rule.info_partitions[myself].iter().map(|(info_set_id, _)| {
-                    (info_set_id.clone(), rule.actions_by_info_set[info_set_id].iter().map(|action_id| {
+                    (*info_set_id, rule.actions_by_info_set[info_set_id].iter().map(|action_id| {
                         latest_prof[myself][info_set_id][action_id] * s[info_set_id][action_id]
                     }).sum())
                 }).collect();
 
                 let t = t as f64;
                 rule.info_partitions[myself].iter().map(|(info_set_id, _)| {
-                    (info_set_id.clone(), rule.actions_by_info_set[info_set_id].iter().map(|action_id| {
-                        (action_id.clone(), (t * reg[info_set_id][action_id] + s[info_set_id][action_id] - u[info_set_id]) / (t + 1.0))
+                    (*info_set_id, rule.actions_by_info_set[info_set_id].iter().map(|action_id| {
+                        (*action_id, (t * reg[info_set_id][action_id] + s[info_set_id][action_id] - u[info_set_id]) / (t + 1.0))
                     }).collect())
                 }).collect()
             })
@@ -82,9 +82,9 @@ pub fn calc_nash_strt(rule: &Rule, init_prof: Profile, step: usize) -> Profile {
 
 
         latest_prof = regret.iter().map(|(myself, reg)| {
-            (myself.clone(), {
+            (*myself, {
                 reg.iter().map(|(info_set_id, dist)| {
-                    (info_set_id.clone(), normalized(positive_part(dist.clone()).clone()))
+                    (*info_set_id, normalized(positive_part(dist.clone())))
                 }).collect()
             })
         }).collect();
@@ -93,11 +93,11 @@ pub fn calc_nash_strt(rule: &Rule, init_prof: Profile, step: usize) -> Profile {
         avg_prof = [Player::P1, Player::P2].iter().map(|myself| {
             let latest_prob_to_reach_info_set_only_myself = calc_prob_to_reach_info_set_only(rule, &latest_prof, myself);
             let avg_prob_to_reach_info_set_only_myself = calc_prob_to_reach_info_set_only(rule, &avg_prof, myself);
-            (myself.clone(), {
+            (*myself, {
                 rule.info_partitions[myself].iter().map(|(info_set_id, _)| {                            
-                    (info_set_id.clone(), {
+                    (*info_set_id, {
                         rule.actions_by_info_set[info_set_id].iter().map(|action_id| {
-                            (action_id.clone(), {
+                            (*action_id, {
                                 let latest = latest_prob_to_reach_info_set_only_myself[info_set_id];
                                 let total = avg_prob_to_reach_info_set_only_myself[info_set_id] * t as f64;
                                 // TODO: speed up

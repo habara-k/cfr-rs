@@ -33,22 +33,22 @@ impl Node {
         }
     }
 
-    pub fn value(&self) -> NodeValue {
+    pub fn value(&self) -> &NodeValue {
         match self {
-            Node::Terminal{ value } => *value,
+            Node::Terminal{ value } => value,
             Node::NonTerminal{ .. } => panic!("non terminal has no value"),
         }
     }
-    pub fn player(&self) -> Player {
+    pub fn player(&self) -> &Player {
         match self {
             Node::Terminal{ .. } => panic!("terminal has no player"),
-            Node::NonTerminal{ player, .. } => *player,
+            Node::NonTerminal{ player, .. } => player,
         }
     }
-    pub fn edges(&self) -> BTreeMap<ActionId, NodeId> {
+    pub fn edges(&self) -> &BTreeMap<ActionId, NodeId> {
         match self {
             Node::Terminal{ .. } => panic!("terminal has no edges"),
-            Node::NonTerminal{ edges, .. } => edges.clone(),
+            Node::NonTerminal{ edges, .. } => edges
         }
     }
 }

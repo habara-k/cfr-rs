@@ -27,16 +27,16 @@ fn calc_ev_inner(rule: &Rule, prof: &Profile, node_id: &NodeId, prob: f64) -> f6
     }
 }
 
-pub fn calc_best_resp_against_to(rule: &Rule, opponent: &Player, opp_strt: Strategy) -> (Strategy, f64) {
+pub fn calc_best_resp_against_to(rule: &Rule, opponent: Player, opp_strt: Strategy) -> (Strategy, f64) {
     let myself = opponent.opponent();
     let prof = profile::from_strt(
-        &myself, strategy::ones(rule, &myself),
+        myself, strategy::ones(rule, &myself),
         opponent,  opp_strt);
 
     let prob_to_reach_terminal_node = calc_prob_to_reach_terminal_node(rule, &prof);
     trace!("prob_to_reach_terminal_node: {:?}", prob_to_reach_terminal_node);
 
-    let best_action_at = |vals: &BTreeMap<NodeId, f64>, info_set_id: &InformationSetId| -> ActionId {                
+    let best_action_at = |vals: &BTreeMap<NodeId, f64>, info_set_id: &InformationSetId| -> &ActionId {                
         assert_eq!(myself, rule.player_by_info_set[info_set_id]);
         rule.actions_by_info_set[info_set_id].iter()
             .ord_subset_max_by_key(
@@ -45,7 +45,7 @@ pub fn calc_best_resp_against_to(rule: &Rule, opponent: &Player, opp_strt: Strat
                         vals[&rule.nodes[node_id].edges()[action_id]]
                     }).sum::<f64>() * myself.sign() as f64
                 }
-            ).unwrap().clone()
+            ).unwrap()
     };
 
     let ord = rule.bfs_ord();
@@ -64,8 +64,8 @@ pub fn calc_best_resp_against_to(rule: &Rule, opponent: &Player, opp_strt: Strat
                         let info_set_id = &rule.info_set_id_by_node[node_id];
                         if !best_actions.contains_key(&info_set_id) {
                             let best_action_id = best_action_at(&vals, info_set_id);
-                            best_actions.insert(*info_set_id, best_action_id);
-                            best_strt.get_mut(info_set_id).unwrap().insert(best_action_id, 1.0);
+                            best_actions.insert(*info_set_id, *best_action_id);
+                            best_strt.get_mut(info_set_id).unwrap().insert(*best_action_id, 1.0);
                         }
                         vals[&edges[&best_actions[info_set_id]]]
                     } else {
@@ -103,7 +103,7 @@ fn calc_prob_to_reach_terminal_node_inner(probs: &mut BTreeMap<NodeId, f64>, rul
 }
 
 pub fn calc_exploitability(rule: &Rule, prof: &Profile) -> f64 {
-    let (_, best_resp_to_p2) = calc_best_resp_against_to(rule, &Player::P2, prof[&Player::P2].clone());
-    let (_, best_resp_to_p1) = calc_best_resp_against_to(rule, &Player::P1, prof[&Player::P1].clone());
+    let (_, best_resp_to_p2) = calc_best_resp_against_to(rule, Player::P2, prof[&Player::P2].clone());
+    let (_, best_resp_to_p1) = calc_best_resp_against_to(rule, Player::P1, prof[&Player::P1].clone());
     best_resp_to_p2 - best_resp_to_p1
 }

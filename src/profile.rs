@@ -26,16 +26,16 @@ pub fn from_name(prof_name: &str) -> Profile {
 }
 pub fn uniform(rule: &Rule) -> Profile {
     from_strt(
-        &Player::P1, strategy::uniform(rule, &Player::P1),
-        &Player::P2, strategy::uniform(rule, &Player::P2))
+        Player::P1, strategy::uniform(rule, &Player::P1),
+        Player::P2, strategy::uniform(rule, &Player::P2))
 }
-pub fn from_strt(a: &Player, a_strt: Strategy, b: &Player, b_strt: Strategy) -> Profile {
-    if *a == Player::C || *b == Player::C || *a == *b {
+pub fn from_strt(a: Player, a_strt: Strategy, b: Player, b_strt: Strategy) -> Profile {
+    if a == Player::C || b == Player::C || a == b {
         panic!("invalid arguments");
     }
     let mut prof = Profile::new();
-    prof.insert(a.clone(), a_strt);
-    prof.insert(b.clone(), b_strt);
+    prof.insert(a, a_strt);
+    prof.insert(b, b_strt);
     prof
 }
 
