@@ -32,6 +32,11 @@ fn main() {
         .expect("step must be usize");
     let uniform_prof = profile::uniform(&rule);
 
+    info!(
+        "uniform exploitability: {}",
+        solver::calc_exploitability(&rule, &uniform_prof)
+    );
+
     let prof = measure!({ cfr::calc_nash_strt(&rule, uniform_prof, step) });
 
     visualizer::print_prof(&rule, &prof);
