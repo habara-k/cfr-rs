@@ -1,16 +1,16 @@
-use std::collections::BTreeMap;
 use super::{
     action::ActionId,
-    player::Player,
     node::NodeId,
-    rule::{Rule, InformationSetId},
+    player::Player,
     profile::Profile,
+    rule::{InformationSetId, Rule},
 };
+use std::collections::BTreeMap;
 
 pub fn print_node(rule: &Rule, node_id: &NodeId) {
     print!("[");
     for (i, action_id) in rule.history[node_id].iter().enumerate() {
-        if i+1 == rule.history[node_id].len() {
+        if i + 1 == rule.history[node_id].len() {
             print!("{:?}", rule.actions[action_id]);
         } else {
             print!("{:?}, ", rule.actions[action_id]);

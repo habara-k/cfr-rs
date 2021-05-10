@@ -1,13 +1,13 @@
-use std::collections::BTreeMap;
-use std::fs;
 use super::{
     action::ActionId,
-    player::Player,
     node::{Node, NodeId},
-    strategy::{self, Strategy},
+    player::Player,
     rule::Rule,
+    strategy::{self, Strategy},
 };
-pub type Profile = BTreeMap<Player,Strategy>;
+use std::collections::BTreeMap;
+use std::fs;
+pub type Profile = BTreeMap<Player, Strategy>;
 pub fn from_json(json: &str) -> Profile {
     let prof: Profile = serde_json::from_str(json).expect("failed to deserialize json");
     prof
@@ -26,8 +26,11 @@ pub fn from_name(prof_name: &str) -> Profile {
 }
 pub fn uniform(rule: &Rule) -> Profile {
     from_strt(
-        Player::P1, strategy::uniform(rule, &Player::P1),
-        Player::P2, strategy::uniform(rule, &Player::P2))
+        Player::P1,
+        strategy::uniform(rule, &Player::P1),
+        Player::P2,
+        strategy::uniform(rule, &Player::P2),
+    )
 }
 pub fn from_strt(a: Player, a_strt: Strategy, b: Player, b_strt: Strategy) -> Profile {
     if a == Player::C || b == Player::C || a == b {
@@ -39,16 +42,19 @@ pub fn from_strt(a: Player, a_strt: Strategy, b: Player, b_strt: Strategy) -> Pr
     prof
 }
 
-pub fn prob_to_take_action(rule: &Rule, prof: &Profile, node_id: &NodeId, action_id: &ActionId) -> f64 {
+pub fn prob_to_take_action(
+    rule: &Rule,
+    prof: &Profile,
+    node_id: &NodeId,
+    action_id: &ActionId,
+) -> f64 {
     match &rule.nodes[node_id] {
-        Node::Terminal{ .. } => {
+        Node::Terminal { .. } => {
             panic!("terminal has no action");
-        },
-        Node::NonTerminal{ player, .. } => {
-            match player {
-                Player::P1 | Player::P2 => prof[player][&rule.info_set_id_by_node[node_id]][action_id],
-                Player::C => rule.transition[node_id][action_id],
-            }
+        }
+        Node::NonTerminal { player, .. } => match player {
+            Player::P1 | Player::P2 => prof[player][&rule.info_set_id_by_node[node_id]][action_id],
+            Player::C => rule.transition[node_id][action_id],
         },
     }
 }

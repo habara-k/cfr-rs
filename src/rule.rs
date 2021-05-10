@@ -1,11 +1,11 @@
-use std::collections::{BTreeMap, VecDeque};
-use std::fs;
-use serde::{Deserialize, Serialize};
 use super::{
     action::{Action, ActionId},
     node::{Node, NodeId, NodeValue},
     player::Player,
 };
+use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, VecDeque};
+use std::fs;
 
 pub type InformationSet = Vec<NodeId>;
 
@@ -21,7 +21,7 @@ pub struct Rule {
     pub actions: BTreeMap<ActionId, Action>,
     pub nodes: BTreeMap<NodeId, Node>,
     pub root: NodeId,
-    pub info_partitions: BTreeMap<Player,InformationPartition>,
+    pub info_partitions: BTreeMap<Player, InformationPartition>,
     pub transition: Transition,
 
     // for utils
@@ -36,7 +36,7 @@ pub struct Rule {
     #[serde(skip_deserializing)]
     pub max_action_size_of: BTreeMap<Player, usize>,
     #[serde(skip_deserializing)]
-    pub history: BTreeMap<NodeId, Vec<ActionId>>
+    pub history: BTreeMap<NodeId, Vec<ActionId>>,
 }
 
 impl Rule {
@@ -51,7 +51,7 @@ impl Rule {
 
     fn build_info_set_id_by_node(&mut self) {
         trace!("start: build_info_set_id_by_node");
-        for (_, partition) in self.info_partitions.iter() {                
+        for (_, partition) in self.info_partitions.iter() {
             for (info_set_id, info_set) in partition.iter() {
                 for node_id in info_set.iter() {
                     self.info_set_id_by_node.insert(*node_id, *info_set_id);
@@ -63,10 +63,10 @@ impl Rule {
 
     fn build_actions_by_info_set(&mut self) {
         trace!("start: build_actions_by_info_set");
-        for (_, partition) in self.info_partitions.iter() {                
+        for (_, partition) in self.info_partitions.iter() {
             for (info_set_id, info_set) in partition.iter() {
-                for node_id in info_set.iter() {                        
-                    if let Node::NonTerminal{ edges, .. } = &self.nodes[node_id] {
+                for node_id in info_set.iter() {
+                    if let Node::NonTerminal { edges, .. } = &self.nodes[node_id] {
                         let actions: Vec<ActionId> = edges.keys().cloned().collect();
                         if self.actions_by_info_set.contains_key(info_set_id) {
                             assert_eq!(actions, self.actions_by_info_set[info_set_id]);
@@ -82,10 +82,10 @@ impl Rule {
 
     fn build_player_by_info_set(&mut self) {
         trace!("start: build_player_by_info_set");
-        for (_, partition) in self.info_partitions.iter() {                
+        for (_, partition) in self.info_partitions.iter() {
             for (info_set_id, info_set) in partition.iter() {
-                for node_id in info_set.iter() {                        
-                    if let Node::NonTerminal{ player, .. } = &self.nodes[node_id] {
+                for node_id in info_set.iter() {
+                    if let Node::NonTerminal { player, .. } = &self.nodes[node_id] {
                         if self.player_by_info_set.contains_key(info_set_id) {
                             assert_eq!(*player, self.player_by_info_set[info_set_id]);
                         } else {
@@ -101,11 +101,11 @@ impl Rule {
     fn build_node_value_scale(&mut self) {
         trace!("start: build_node_value_scale");
         self.node_value_scale = {
-            let iter = self.nodes.iter().filter(|&(_, node)| {
-                node.is_terminal()
-            }).map(|(_, node)| {
-                node.value()
-            });
+            let iter = self
+                .nodes
+                .iter()
+                .filter(|&(_, node)| node.is_terminal())
+                .map(|(_, node)| node.value());
             iter.clone().max().unwrap() - iter.min().unwrap()
         };
         trace!("finish: build_node_value_scale");
@@ -113,13 +113,18 @@ impl Rule {
 
     fn build_max_action_size_of(&mut self) {
         trace!("start: build_max_action_size_of");
-        self.max_action_size_of = [Player::P1, Player::P2].iter().map(|player| {
-            (*player, {
-                self.info_partitions[player].iter().map(|(info_set_id, _)| {
-                    self.actions_by_info_set[info_set_id].len()
-                }).max().unwrap()
+        self.max_action_size_of = [Player::P1, Player::P2]
+            .iter()
+            .map(|player| {
+                (*player, {
+                    self.info_partitions[player]
+                        .iter()
+                        .map(|(info_set_id, _)| self.actions_by_info_set[info_set_id].len())
+                        .max()
+                        .unwrap()
+                })
             })
-        }).collect();
+            .collect();
         trace!("finish: build_max_action_size_of");
     }
 
@@ -132,7 +137,12 @@ impl Rule {
         trace!("finish: build_history");
     }
 
-    fn build_history_inner(&self, node_id: &NodeId, actions: &mut Vec<ActionId>, history: &mut BTreeMap<NodeId, Vec<ActionId>>) {
+    fn build_history_inner(
+        &self,
+        node_id: &NodeId,
+        actions: &mut Vec<ActionId>,
+        history: &mut BTreeMap<NodeId, Vec<ActionId>>,
+    ) {
         history.insert(*node_id, actions.clone());
         if let Node::NonTerminal { edges, .. } = &self.nodes[node_id] {
             for (action_id, child_id) in edges.iter() {
@@ -152,11 +162,11 @@ impl Rule {
         let mut que: VecDeque<NodeId> = VecDeque::new();
         que.push_back(self.root);
         ord.push(self.root);
-        while !que.is_empty() {                        
+        while !que.is_empty() {
             let node_id = *que.front().unwrap();
             que.pop_front();
-            if let Node::NonTerminal{ edges, .. } = &self.nodes[&node_id] {
-                for (_, child_id) in edges.iter() {                                    
+            if let Node::NonTerminal { edges, .. } = &self.nodes[&node_id] {
+                for (_, child_id) in edges.iter() {
                     que.push_back(*child_id);
                     ord.push(*child_id);
                 }
@@ -180,5 +190,5 @@ pub fn from_name(rule_name: &str) -> Rule {
         "kuhn" => from_file("src/rule/kuhn.json"),
         "glico" => from_file("src/rule/glico.json"),
         _ => panic!("invalid rule name"),
-    } 
+    }
 }

@@ -1,6 +1,6 @@
-use std::collections::BTreeMap;
+use super::{action::ActionId, player::Player};
 use serde::{Deserialize, Serialize};
-use super::{player::Player, action::ActionId};
+use std::collections::BTreeMap;
 
 #[derive(Clone, Copy, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct NodeId(usize);
@@ -21,34 +21,34 @@ pub enum Node {
 impl Node {
     pub fn is_terminal(&self) -> bool {
         match self {
-            Node::Terminal{ .. } => true,
-            Node::NonTerminal{ .. } => false,
+            Node::Terminal { .. } => true,
+            Node::NonTerminal { .. } => false,
         }
     }
 
     pub fn is_non_terminal(&self) -> bool {
         match self {
-            Node::Terminal{ .. } => false,
-            Node::NonTerminal{ .. } => true,
+            Node::Terminal { .. } => false,
+            Node::NonTerminal { .. } => true,
         }
     }
 
     pub fn value(&self) -> &NodeValue {
         match self {
-            Node::Terminal{ value } => value,
-            Node::NonTerminal{ .. } => panic!("non terminal has no value"),
+            Node::Terminal { value } => value,
+            Node::NonTerminal { .. } => panic!("non terminal has no value"),
         }
     }
     pub fn player(&self) -> &Player {
         match self {
-            Node::Terminal{ .. } => panic!("terminal has no player"),
-            Node::NonTerminal{ player, .. } => player,
+            Node::Terminal { .. } => panic!("terminal has no player"),
+            Node::NonTerminal { player, .. } => player,
         }
     }
     pub fn edges(&self) -> &BTreeMap<ActionId, NodeId> {
         match self {
-            Node::Terminal{ .. } => panic!("terminal has no edges"),
-            Node::NonTerminal{ edges, .. } => edges
+            Node::Terminal { .. } => panic!("terminal has no edges"),
+            Node::NonTerminal { edges, .. } => edges,
         }
     }
 }
