@@ -96,11 +96,10 @@ pub fn calc_nash_strt(rule: &Rule, init_prof: Profile, step: usize) -> Profile {
             (*myself, {
                 rule.info_partitions[myself].iter().map(|(info_set_id, _)| {                            
                     (*info_set_id, {
+                        let latest = latest_prob_to_reach_info_set_only_myself[info_set_id];
+                        let total = avg_prob_to_reach_info_set_only_myself[info_set_id] * t as f64;
                         rule.actions_by_info_set[info_set_id].iter().map(|action_id| {
                             (*action_id, {
-                                let latest = latest_prob_to_reach_info_set_only_myself[info_set_id];
-                                let total = avg_prob_to_reach_info_set_only_myself[info_set_id] * t as f64;
-                                // TODO: speed up
                                 (avg_prof[myself][info_set_id][action_id] * total +
                                 latest_prof[myself][info_set_id][action_id] * latest) / (latest + total)
                             })
