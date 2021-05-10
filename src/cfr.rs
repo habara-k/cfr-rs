@@ -33,18 +33,6 @@ fn normalized(v: BTreeMap<ActionId, f64>) -> BTreeMap<ActionId, f64> {
         .collect()
 }
 
-#[allow(dead_code)]
-fn exploitability_upper_bound(rule: &Rule, t: usize) -> f64 {
-    let a1 = rule.info_partitions[&Player::P1].len() as f64
-        * (rule.max_action_size_of[&Player::P1] as f64).sqrt();
-    let a2 = rule.info_partitions[&Player::P2].len() as f64
-        * (rule.max_action_size_of[&Player::P2] as f64).sqrt();
-
-    let max = if a1 < a2 { a2 } else { a1 };
-
-    2.0 * max / (t as f64).sqrt()
-}
-
 pub fn calc_nash_strt(rule: &Rule, init_prof: Profile, step: usize) -> Profile {
     let mut regret: BTreeMap<Player, RegretType> = rule
         .info_partitions

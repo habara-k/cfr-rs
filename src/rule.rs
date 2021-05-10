@@ -1,6 +1,6 @@
 use super::{
     action::{Action, ActionId},
-    node::{Node, NodeId, NodeValue},
+    node::{Node, NodeId},
     player::Player,
 };
 use serde::{Deserialize, Serialize};
@@ -32,10 +32,6 @@ pub struct Rule {
     #[serde(skip_deserializing)]
     pub player_by_info_set: BTreeMap<InformationSetId, Player>,
     #[serde(skip_deserializing)]
-    pub node_value_scale: NodeValue,
-    #[serde(skip_deserializing)]
-    pub max_action_size_of: BTreeMap<Player, usize>,
-    #[serde(skip_deserializing)]
     pub history: BTreeMap<NodeId, Vec<ActionId>>,
 }
 
@@ -44,8 +40,6 @@ impl Rule {
         self.build_info_set_id_by_node();
         self.build_actions_by_info_set();
         self.build_player_by_info_set();
-        self.build_node_value_scale();
-        self.build_max_action_size_of();
         self.build_history();
     }
 
@@ -96,36 +90,6 @@ impl Rule {
             }
         }
         trace!("finish: build_player_by_info_set");
-    }
-
-    fn build_node_value_scale(&mut self) {
-        trace!("start: build_node_value_scale");
-        self.node_value_scale = {
-            let iter = self
-                .nodes
-                .iter()
-                .filter(|&(_, node)| node.is_terminal())
-                .map(|(_, node)| node.value());
-            iter.clone().max().unwrap() - iter.min().unwrap()
-        };
-        trace!("finish: build_node_value_scale");
-    }
-
-    fn build_max_action_size_of(&mut self) {
-        trace!("start: build_max_action_size_of");
-        self.max_action_size_of = [Player::P1, Player::P2]
-            .iter()
-            .map(|player| {
-                (*player, {
-                    self.info_partitions[player]
-                        .iter()
-                        .map(|(info_set_id, _)| self.actions_by_info_set[info_set_id].len())
-                        .max()
-                        .unwrap()
-                })
-            })
-            .collect();
-        trace!("finish: build_max_action_size_of");
     }
 
     fn build_history(&mut self) {
