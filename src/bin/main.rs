@@ -22,7 +22,7 @@ fn main() {
 
     trace!("start: main");
 
-    let rule = Rule::from_name(&std::env::args().nth(1).expect("no rule given")).expect("invalid rule");
+    let rule = rule::from_name(&std::env::args().nth(1).expect("no rule given"));
     let step = std::env::args().nth(2).expect("no step given").parse::<usize>().expect("step must be usize");
     let uniform_prof = profile::uniform(&rule);
 
@@ -34,8 +34,8 @@ fn main() {
 
     println!("expected value: {:.6}", solver::calc_ev(&rule, &prof));
 
-    println!("P1 can achieve at worst: {:.6}", solver::calc_best_resp_against_to(&rule, &Player::P1, prof[&Player::P1].clone()).1);
-    println!("P2 can achieve at worst: {:.6}", solver::calc_best_resp_against_to(&rule, &Player::P2, prof[&Player::P2].clone()).1);
+    println!("P1 can achieve at worst: {:.8}", solver::calc_best_resp_against_to(&rule, &Player::P1, prof[&Player::P1].clone()).1);
+    println!("P2 can achieve at worst: {:.8}", solver::calc_best_resp_against_to(&rule, &Player::P2, prof[&Player::P2].clone()).1);
 
     info!("exploitability: {}", solver::calc_exploitability(&rule, &prof));
 
