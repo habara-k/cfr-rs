@@ -381,8 +381,8 @@ pub mod profile {
 
     pub fn from_name(prof_name: &str) -> Profile {
         match prof_name {
-            "kuhn_nash" => from_file("src/profile/kuhn.json"),
-            "glico_nash" => from_file("src/profile/glico.json"),
+            "kuhn_nash" => from_file("src/profile/kuhn_nash.json"),
+            "glico_nash" => from_file("src/profile/glico_nash.json"),
             _ => panic!("invalid profile name"),
         }
     }

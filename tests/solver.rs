@@ -6,9 +6,9 @@ mod tests {
     use approx_eq::assert_approx_eq;
     #[test]
     fn kuhn() {
-        let rule = Rule::from_name("kuhn").unwrap();
+        let rule = rule::from_name("kuhn");
 
-        let nash_prof = profile::from_name("kuhn_nash").unwrap();
+        let nash_prof = profile::from_name("kuhn_nash");
         assert_approx_eq!(solver::calc_ev(&rule, &nash_prof), -1.0 / 18.0);
         assert_approx_eq!(solver::calc_exploitability(&rule, &nash_prof), 0.0);
 
@@ -18,9 +18,9 @@ mod tests {
     }
     #[test]
     fn glico() {
-        let rule = Rule::from_name("glico").unwrap();
+        let rule = rule::from_name("glico");
 
-        let nash_prof = profile::from_name("glico_nash").unwrap();
+        let nash_prof = profile::from_name("glico_nash");
         assert_approx_eq!(solver::calc_ev(&rule, &nash_prof), 0.0);
         assert_approx_eq!(solver::calc_exploitability(&rule, &nash_prof), 0.0);
 
