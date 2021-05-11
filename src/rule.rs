@@ -139,6 +139,7 @@ impl Rule {
         ord
     }
 }
+
 pub fn from_json(json: &str) -> Rule {
     let mut rule: Rule = serde_json::from_str(json).expect("failed to deserialize json");
     rule.build();

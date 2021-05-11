@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, Debug)]
+#[derive(Clone, Copy, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum Player {
     P1,
     P2,
@@ -15,6 +15,7 @@ impl Player {
             Player::C => panic!("Player::C has no opponent"),
         }
     }
+
     pub fn sign(&self) -> i32 {
         match self {
             Player::P1 => 1,

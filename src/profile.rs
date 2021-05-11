@@ -7,7 +7,9 @@ use super::{
 };
 use std::collections::BTreeMap;
 use std::fs;
+
 pub type Profile = BTreeMap<Player, Strategy>;
+
 pub fn from_json(json: &str) -> Profile {
     let prof: Profile = serde_json::from_str(json).expect("failed to deserialize json");
     prof
@@ -24,6 +26,7 @@ pub fn from_name(prof_name: &str) -> Profile {
         _ => panic!("invalid profile name"),
     }
 }
+
 pub fn uniform(rule: &Rule) -> Profile {
     from_strt(
         Player::P1,
@@ -32,6 +35,7 @@ pub fn uniform(rule: &Rule) -> Profile {
         strategy::uniform(rule, &Player::P2),
     )
 }
+
 pub fn from_strt(a: Player, a_strt: Strategy, b: Player, b_strt: Strategy) -> Profile {
     if a == Player::C || b == Player::C || a == b {
         panic!("invalid arguments");

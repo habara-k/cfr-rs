@@ -15,6 +15,7 @@ fn positive_part(v: BTreeMap<ActionId, f64>) -> BTreeMap<ActionId, f64> {
         .map(|(action_id, prob)| (action_id, if prob < 0.0 { 0.0 } else { prob }))
         .collect()
 }
+
 fn normalized(v: BTreeMap<ActionId, f64>) -> BTreeMap<ActionId, f64> {
     let eps = 1e-9;
     let norm: f64 = v.iter().map(|(_, prob)| prob).sum();
@@ -271,10 +272,11 @@ fn calc_ev_under_node_for_player(
     myself: &Player,
 ) -> BTreeMap<NodeId, f64> {
     let mut ev: BTreeMap<NodeId, f64> = BTreeMap::new();
-    calc_ev_under_node_inner_for_player(&mut ev, rule, prof, &rule.root, myself);
+    calc_ev_under_node_for_player_inner(&mut ev, rule, prof, &rule.root, myself);
     ev
 }
-fn calc_ev_under_node_inner_for_player(
+
+fn calc_ev_under_node_for_player_inner(
     evs: &mut BTreeMap<NodeId, f64>,
     rule: &Rule,
     prof: &Profile,
@@ -286,7 +288,7 @@ fn calc_ev_under_node_inner_for_player(
         Node::NonTerminal { edges, .. } => edges
             .iter()
             .map(|(action_id, child_id)| {
-                calc_ev_under_node_inner_for_player(evs, rule, prof, child_id, myself);
+                calc_ev_under_node_for_player_inner(evs, rule, prof, child_id, myself);
                 evs[child_id] * profile::prob_to_take_action(rule, prof, node_id, action_id)
             })
             .sum(),

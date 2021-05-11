@@ -4,14 +4,17 @@ use super::{
     rule::{InformationSetId, Rule},
 };
 use std::collections::BTreeMap;
+
 pub type Strategy = BTreeMap<InformationSetId, BTreeMap<ActionId, f64>>;
 
 pub fn ones(rule: &Rule, player: &Player) -> Strategy {
     filled_with(rule, player, &1.0)
 }
+
 pub fn zeros(rule: &Rule, player: &Player) -> Strategy {
     filled_with(rule, player, &0.0)
 }
+
 pub fn filled_with(rule: &Rule, player: &Player, prob: &f64) -> Strategy {
     rule.info_partitions[player]
         .iter()
@@ -25,6 +28,7 @@ pub fn filled_with(rule: &Rule, player: &Player, prob: &f64) -> Strategy {
         })
         .collect()
 }
+
 pub fn uniform(rule: &Rule, player: &Player) -> Strategy {
     rule.info_partitions[player]
         .iter()

@@ -7,7 +7,7 @@ pub struct NodeId(usize);
 
 pub type NodeValue = i32;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub enum Node {
     Terminal {
         value: NodeValue,
@@ -39,12 +39,14 @@ impl Node {
             Node::NonTerminal { .. } => panic!("non terminal has no value"),
         }
     }
+
     pub fn player(&self) -> &Player {
         match self {
             Node::Terminal { .. } => panic!("terminal has no player"),
             Node::NonTerminal { player, .. } => player,
         }
     }
+
     pub fn edges(&self) -> &BTreeMap<ActionId, NodeId> {
         match self {
             Node::Terminal { .. } => panic!("terminal has no edges"),
