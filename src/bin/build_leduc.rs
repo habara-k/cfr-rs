@@ -1,4 +1,3 @@
-
 extern crate cfr_rs;
 use cfr_rs::*;
 

@@ -13,7 +13,6 @@ impl NodeId {
 
 pub type NodeValue = i32;
 
-
 #[derive(Clone, Deserialize, Serialize)]
 pub enum Node {
     Terminal {
