@@ -31,13 +31,13 @@ pub struct Rule {
     pub transition: Transition,
 
     // for utils
-    #[serde(skip_deserializing)]
+    #[serde(skip_deserializing, skip_serializing)]
     pub info_set_id_by_node: BTreeMap<NodeId, InformationSetId>,
-    #[serde(skip_deserializing)]
+    #[serde(skip_deserializing, skip_serializing)]
     pub actions_by_info_set: BTreeMap<InformationSetId, Vec<ActionId>>,
-    #[serde(skip_deserializing)]
+    #[serde(skip_deserializing, skip_serializing)]
     pub player_by_info_set: BTreeMap<InformationSetId, Player>,
-    #[serde(skip_deserializing)]
+    #[serde(skip_deserializing, skip_serializing)]
     pub history: BTreeMap<NodeId, Vec<ActionId>>,
 }
 
