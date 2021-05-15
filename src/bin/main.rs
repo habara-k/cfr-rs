@@ -39,7 +39,7 @@ fn main() {
 
     let prof = measure!({ cfr::calc_nash_strt(&rule, uniform_prof, step) });
 
-    visualizer::print_prof(&rule, &prof);
+    // visualizer::print_prof(&rule, &prof);
 
     println!("expected value: {:.6}", solver::calc_ev(&rule, &prof));
 

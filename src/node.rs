@@ -2,8 +2,14 @@ use super::{action::ActionId, player::Player};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-#[derive(Clone, Copy, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, Default, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct NodeId(usize);
+
+impl NodeId {
+    pub fn new(i: usize) -> NodeId {
+        NodeId(i)
+    }
+}
 
 pub type NodeValue = i32;
 
