@@ -198,7 +198,6 @@ pub mod leduc {
         rule.root = NodeId::new(0);
         rule.info_partitions = leduc.info_partitions;
         rule.transition = leduc.transition;
-        rule.build();
         rule
     }
 
