@@ -1,7 +1,6 @@
 
 extern crate cfr_rs;
 use cfr_rs::*;
-use std::fs;
 
 fn main() {
     env_logger::init();

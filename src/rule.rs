@@ -159,6 +159,7 @@ pub fn from_file(path: &str) -> Rule {
 pub fn from_name(rule_name: &str) -> Rule {
     match rule_name {
         "kuhn" => from_file("src/rule/kuhn.json"),
+        "leduc" => from_file("src/rule/leduc.json"),
         "glico" => from_file("src/rule/glico.json"),
         _ => panic!("invalid rule name"),
     }
@@ -169,12 +170,12 @@ pub mod leduc {
 
     pub fn rule() -> Rule {
         let actions: BTreeMap<ActionId, Action> = vec![
+            "Check", "Raise",
+            "Fold", "Call",
+            "FlopJ", "FlopQ", "FlopK",
             "DealJQ", "DealJK", "DealQJ",
             "DealQK", "DealKJ", "DealKQ",
             "DealJJ", "DealQQ", "DealKK",
-            "FlopJ", "FlopQ", "FlopK",
-            "Check", "Raise",
-            "Fold", "Call",
             ].iter().enumerate().map(|(i, &action)| (ActionId::new(i), Action::new(action))).collect();
         let action_id = actions.iter().map(|(i, action)| (action.clone(), *i)).collect();
         let mut leduc: Leduc = Default::default();
@@ -220,8 +221,8 @@ pub mod leduc {
         fn build(&mut self) {
             let mut que: VecDeque<State> = VecDeque::new();
             let mut init_state: State = Default::default();
-            init_state.bet.insert(Player::P1, 0);
-            init_state.bet.insert(Player::P2, 0);
+            init_state.bet.insert(Player::P1, 1);
+            init_state.bet.insert(Player::P2, 1);
             que.push_back(init_state);
 
             while !que.is_empty() {
@@ -282,7 +283,7 @@ pub mod leduc {
                                     player, s.bet[&player.opponent()]);
                             },
                             "Raise" => {
-                                let raise_size = if s.history.iter().any(|&action| action.starts_with("Flop")) { 4 } else { 2 };
+                                let raise_size = if s.history.iter().any(|&action| action.starts_with("Flop")) { 4 } else if s.history.iter().any(|&action| action.starts_with("Raise")) { 2 } else { 1 };
                                 next_state.bet.insert(
                                     player, s.bet[&player.opponent()] + raise_size);
                             }
@@ -330,7 +331,7 @@ pub mod leduc {
         }).collect()
     }
 
-    fn transition(s: &State) -> Option<BTreeMap<&'static str, f64>> {
+    fn transition(s: &State) -> Option<Vec<(&'static str, f64)>> {
         let n = s.history.len();
         if n == 0 {
             return Some([
