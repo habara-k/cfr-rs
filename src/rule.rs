@@ -201,6 +201,7 @@ pub mod leduc {
         rule.build();
         rule
     }
+
     #[derive(Default)]
     pub struct Leduc {
         actions: BTreeMap<ActionId, Action>,
