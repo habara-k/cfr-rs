@@ -4,7 +4,6 @@ extern crate log;
 pub mod action;
 pub mod node;
 pub mod player;
-pub mod profile;
 pub mod rule;
 pub mod strategy;
 

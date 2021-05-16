@@ -1,24 +1,23 @@
 use super::{
     action::ActionId,
-    player::Player,
     rule::{InformationSetId, Rule},
 };
 use std::collections::BTreeMap;
+use std::fs;
 
 pub type Strategy = BTreeMap<InformationSetId, BTreeMap<ActionId, f64>>;
 
-pub fn ones(rule: &Rule, player: &Player) -> Strategy {
-    filled_with(rule, player, &1.0)
+pub fn ones(rule: &Rule) -> Strategy {
+    filled_with(rule,  &1.0)
 }
 
-pub fn zeros(rule: &Rule, player: &Player) -> Strategy {
-    filled_with(rule, player, &0.0)
+pub fn zeros(rule: &Rule) -> Strategy {
+    filled_with(rule, &0.0)
 }
 
-pub fn filled_with(rule: &Rule, player: &Player, prob: &f64) -> Strategy {
+pub fn filled_with(rule: &Rule, prob: &f64) -> Strategy {
     rule.info_partition
         .iter()
-        .filter(|(info_set_id, _)| rule.player_by_info_set[info_set_id] == *player)
         .map(|(info_set_id, _)| (
             *info_set_id, 
             rule.actions_by_info_set[info_set_id]
@@ -29,10 +28,9 @@ pub fn filled_with(rule: &Rule, player: &Player, prob: &f64) -> Strategy {
         .collect()
 }
 
-pub fn uniform(rule: &Rule, player: &Player) -> Strategy {
+pub fn uniform(rule: &Rule) -> Strategy {
     rule.info_partition
         .iter()
-        .filter(|(info_set_id, _)| rule.player_by_info_set[info_set_id] == *player)
         .map(|(info_set_id, _)| (
             *info_set_id, {
                 let prob = 1.0 / rule.actions_by_info_set[info_set_id].len() as f64;
@@ -43,4 +41,21 @@ pub fn uniform(rule: &Rule, player: &Player) -> Strategy {
             }
         ))
         .collect()
+}
+
+pub fn from_json(json: &str) -> Strategy {
+    let strt: Strategy = serde_json::from_str(json).expect("failed to deserialize json");
+    strt
+}
+
+pub fn from_file(path: &str) -> Strategy {
+    from_json(&fs::read_to_string(path).expect("failed to read file"))
+}
+
+pub fn from_name(strt_name: &str) -> Strategy {
+    match strt_name {
+        "kuhn_nash" => from_file("src/strategy/kuhn_nash.json"),
+        "glico_nash" => from_file("src/strategy/glico_nash.json"),
+        _ => panic!("invalid strategy name"),
+    }
 }

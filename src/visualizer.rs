@@ -1,8 +1,7 @@
 use super::{
     action::ActionId,
     node::NodeId,
-    player::Player,
-    profile::Profile,
+    strategy::Strategy,
     rule::{InformationSetId, Rule},
 };
 use std::collections::BTreeMap;
@@ -37,16 +36,12 @@ pub fn print_dist(rule: &Rule, dist: &BTreeMap<ActionId, f64>) {
     print!("  }}");
 }
 
-pub fn print_prof(rule: &Rule, prof: &Profile) {
-    for player in [Player::P1, Player::P2].iter() {
-        println!("{:?}: {{", player);
-        for (info_set_id, dist) in prof[player].iter() {
-            print!("  ");
-            print_info_set(rule, info_set_id);
-            print!(": ");
-            print_dist(rule, dist);
-            println!(",");
-        }
-        println!("}}");
+pub fn print_strt(rule: &Rule, strt: &Strategy) {
+    for (info_set_id, dist) in strt.iter() {
+        print!("  ");
+        print_info_set(rule, info_set_id);
+        print!(": ");
+        print_dist(rule, dist);
+        println!(",");
     }
 }
