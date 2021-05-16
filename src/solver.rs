@@ -46,7 +46,7 @@ pub fn calc_best_resp_against_to(
             rule.actions_by_info_set[info_set_id]
                 .iter()
                 .ord_subset_max_by_key(|action_id| -> f64 {
-                    rule.info_partitions[&myself][info_set_id]
+                    rule.info_partition[info_set_id]
                         .iter()
                         .map(|node_id| vals[&rule.nodes[node_id].edges()[action_id]])
                         .sum::<f64>()

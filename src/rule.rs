@@ -27,7 +27,7 @@ pub struct Rule {
     pub actions: BTreeMap<ActionId, Action>,
     pub nodes: BTreeMap<NodeId, Node>,
     pub root: NodeId,
-    pub info_partitions: BTreeMap<Player, InformationPartition>,
+    pub info_partition: InformationPartition,
     pub transition: Transition,
 
     // for utils
@@ -51,11 +51,9 @@ impl Rule {
 
     fn build_info_set_id_by_node(&mut self) {
         trace!("start: build_info_set_id_by_node");
-        for (_, partition) in self.info_partitions.iter() {
-            for (info_set_id, info_set) in partition.iter() {
-                for node_id in info_set.iter() {
-                    self.info_set_id_by_node.insert(*node_id, *info_set_id);
-                }
+        for (info_set_id, info_set) in self.info_partition.iter() {
+            for node_id in info_set.iter() {
+                self.info_set_id_by_node.insert(*node_id, *info_set_id);
             }
         }
         trace!("finish: build_info_set_id_by_node");
@@ -63,16 +61,14 @@ impl Rule {
 
     fn build_actions_by_info_set(&mut self) {
         trace!("start: build_actions_by_info_set");
-        for (_, partition) in self.info_partitions.iter() {
-            for (info_set_id, info_set) in partition.iter() {
-                for node_id in info_set.iter() {
-                    if let Node::NonTerminal { edges, .. } = &self.nodes[node_id] {
-                        let actions: Vec<ActionId> = edges.keys().cloned().collect();
-                        if self.actions_by_info_set.contains_key(info_set_id) {
-                            assert_eq!(actions, self.actions_by_info_set[info_set_id]);
-                        } else {
-                            self.actions_by_info_set.insert(*info_set_id, actions);
-                        }
+        for (info_set_id, info_set) in self.info_partition.iter() {
+            for node_id in info_set.iter() {
+                if let Node::NonTerminal { edges, .. } = &self.nodes[node_id] {
+                    let actions: Vec<ActionId> = edges.keys().cloned().collect();
+                    if self.actions_by_info_set.contains_key(info_set_id) {
+                        assert_eq!(actions, self.actions_by_info_set[info_set_id]);
+                    } else {
+                        self.actions_by_info_set.insert(*info_set_id, actions);
                     }
                 }
             }
@@ -82,15 +78,13 @@ impl Rule {
 
     fn build_player_by_info_set(&mut self) {
         trace!("start: build_player_by_info_set");
-        for (_, partition) in self.info_partitions.iter() {
-            for (info_set_id, info_set) in partition.iter() {
-                for node_id in info_set.iter() {
-                    if let Node::NonTerminal { player, .. } = &self.nodes[node_id] {
-                        if self.player_by_info_set.contains_key(info_set_id) {
-                            assert_eq!(*player, self.player_by_info_set[info_set_id]);
-                        } else {
-                            self.player_by_info_set.insert(*info_set_id, *player);
-                        }
+        for (info_set_id, info_set) in self.info_partition.iter() {
+            for node_id in info_set.iter() {
+                if let Node::NonTerminal { player, .. } = &self.nodes[node_id] {
+                    if self.player_by_info_set.contains_key(info_set_id) {
+                        assert_eq!(*player, self.player_by_info_set[info_set_id]);
+                    } else {
+                        self.player_by_info_set.insert(*info_set_id, *player);
                     }
                 }
             }
@@ -121,10 +115,6 @@ impl Rule {
                 actions.pop();
             }
         }
-    }
-
-    pub fn info_set_by_id(&self, info_set_id: &InformationSetId) -> &InformationSet {
-        &self.info_partitions[&self.player_by_info_set[info_set_id]][info_set_id]
     }
 
     pub fn bfs_ord(&self) -> Vec<NodeId> {
@@ -184,19 +174,13 @@ pub mod leduc {
         let mut leduc: Leduc = Default::default();
         leduc.actions = actions;
         leduc.action_id = action_id;
-        leduc
-            .info_partitions
-            .insert(Player::P1, InformationPartition::new());
-        leduc
-            .info_partitions
-            .insert(Player::P2, InformationPartition::new());
         leduc.build();
 
         let mut rule: Rule = Default::default();
         rule.actions = leduc.actions;
         rule.nodes = leduc.nodes;
         rule.root = NodeId::new(0);
-        rule.info_partitions = leduc.info_partitions;
+        rule.info_partition = leduc.info_partition;
         rule.transition = leduc.transition;
         rule.build();
         rule
@@ -210,7 +194,7 @@ pub mod leduc {
         node_id: usize,
         transition: Transition,
         observations: BTreeMap<Vec<&'static str>, usize>,
-        info_partitions: BTreeMap<Player, InformationPartition>,
+        info_partition: InformationPartition,
         info_set_id: usize,
     }
 
@@ -281,9 +265,7 @@ pub mod leduc {
                     let obs = observation(&s, player);
                     if self.observations.contains_key(&obs) {
                         let info_set_id = InformationSetId::new(self.observations[&obs]);
-                        self.info_partitions
-                            .get_mut(&player)
-                            .unwrap()
+                        self.info_partition
                             .get_mut(&info_set_id)
                             .unwrap()
                             .push(s.node_id);
@@ -291,9 +273,7 @@ pub mod leduc {
                         let info_set_id = InformationSetId::new(self.info_set_id);
                         self.observations.insert(obs, self.info_set_id);
                         self.info_set_id += 1;
-                        self.info_partitions
-                            .get_mut(&player)
-                            .unwrap()
+                        self.info_partition
                             .insert(info_set_id, vec![s.node_id]);
                     }
 

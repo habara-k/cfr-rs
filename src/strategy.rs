@@ -16,30 +16,31 @@ pub fn zeros(rule: &Rule, player: &Player) -> Strategy {
 }
 
 pub fn filled_with(rule: &Rule, player: &Player, prob: &f64) -> Strategy {
-    rule.info_partitions[player]
+    rule.info_partition
         .iter()
-        .map(|(info_set_id, _)| {
-            (*info_set_id, {
-                rule.actions_by_info_set[info_set_id]
-                    .iter()
-                    .map(|action_id| (*action_id, *prob))
-                    .collect()
-            })
-        })
+        .filter(|(info_set_id, _)| rule.player_by_info_set[info_set_id] == *player)
+        .map(|(info_set_id, _)| (
+            *info_set_id, 
+            rule.actions_by_info_set[info_set_id]
+                .iter()
+                .map(|action_id| (*action_id, *prob))
+                .collect()
+        ))
         .collect()
 }
 
 pub fn uniform(rule: &Rule, player: &Player) -> Strategy {
-    rule.info_partitions[player]
+    rule.info_partition
         .iter()
-        .map(|(info_set_id, _)| {
-            (*info_set_id, {
+        .filter(|(info_set_id, _)| rule.player_by_info_set[info_set_id] == *player)
+        .map(|(info_set_id, _)| (
+            *info_set_id, {
                 let prob = 1.0 / rule.actions_by_info_set[info_set_id].len() as f64;
                 rule.actions_by_info_set[info_set_id]
                     .iter()
                     .map(|action_id| (*action_id, prob))
                     .collect()
-            })
-        })
+            }
+        ))
         .collect()
 }

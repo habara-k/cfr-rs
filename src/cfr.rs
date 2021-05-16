@@ -35,26 +35,24 @@ fn normalized(v: BTreeMap<ActionId, f64>) -> BTreeMap<ActionId, f64> {
 }
 
 pub fn calc_nash_strt(rule: &Rule, init_prof: Profile, step: usize) -> Profile {
-    let mut regret: BTreeMap<Player, RegretType> = rule
-        .info_partitions
+    let mut regret: BTreeMap<Player, RegretType> = [Player::P1, Player::P2]
         .iter()
-        .map(|(player, partition)| {
-            (
-                *player,
-                partition
-                    .iter()
-                    .map(|(info_set_id, _)| {
-                        (
-                            *info_set_id,
-                            rule.actions_by_info_set[info_set_id]
-                                .iter()
-                                .map(|action_id| (*action_id, 0.0))
-                                .collect(),
-                        )
-                    })
-                    .collect(),
-            )
-        })
+        .map(|player| (
+            *player,
+            rule.info_partition
+                .iter()
+                .filter(|(info_set_id, _)| rule.player_by_info_set[info_set_id] == *player)
+                .map(|(info_set_id, _)| {
+                    (
+                        *info_set_id,
+                        rule.actions_by_info_set[info_set_id]
+                            .iter()
+                            .map(|action_id| (*action_id, 0.0))
+                            .collect(),
+                    )
+                })
+                .collect(),
+        ))
         .collect();
 
     let mut latest_prof = init_prof;
@@ -71,8 +69,9 @@ pub fn calc_nash_strt(rule: &Rule, init_prof: Profile, step: usize) -> Profile {
                     let ev_under_node_for_myself =
                         calc_ev_under_node_for_player(rule, &latest_prof, myself);
 
-                    let s: RegretType = rule.info_partitions[myself]
+                    let s: RegretType = rule.info_partition
                         .iter()
+                        .filter(|(info_set_id, _)| rule.player_by_info_set[info_set_id] == *myself)
                         .map(|(info_set_id, node_ids)| {
                             (
                                 *info_set_id,
@@ -97,8 +96,9 @@ pub fn calc_nash_strt(rule: &Rule, init_prof: Profile, step: usize) -> Profile {
                         })
                         .collect();
 
-                    let u: BTreeMap<InformationSetId, f64> = rule.info_partitions[myself]
+                    let u: BTreeMap<InformationSetId, f64> = rule.info_partition
                         .iter()
+                        .filter(|(info_set_id, _)| rule.player_by_info_set[info_set_id] == *myself)
                         .map(|(info_set_id, _)| {
                             (
                                 *info_set_id,
@@ -114,8 +114,9 @@ pub fn calc_nash_strt(rule: &Rule, init_prof: Profile, step: usize) -> Profile {
                         .collect();
 
                     let t = t as f64;
-                    rule.info_partitions[myself]
+                    rule.info_partition
                         .iter()
+                        .filter(|(info_set_id, _)| rule.player_by_info_set[info_set_id] == *myself)
                         .map(|(info_set_id, _)| {
                             (
                                 *info_set_id,
@@ -159,8 +160,9 @@ pub fn calc_nash_strt(rule: &Rule, init_prof: Profile, step: usize) -> Profile {
                 let avg_prob_to_reach_info_set_only_myself =
                     calc_prob_to_reach_info_set_only(rule, &avg_prof, myself);
                 (*myself, {
-                    rule.info_partitions[myself]
+                    rule.info_partition
                         .iter()
+                        .filter(|(info_set_id, _)| rule.player_by_info_set[info_set_id] == *myself)
                         .map(|(info_set_id, _)| {
                             (*info_set_id, {
                                 let latest = latest_prob_to_reach_info_set_only_myself[info_set_id];

@@ -21,7 +21,7 @@ pub fn print_node(rule: &Rule, node_id: &NodeId) {
 
 pub fn print_info_set(rule: &Rule, info_set_id: &InformationSetId) {
     println!("[");
-    for node_id in rule.info_set_by_id(info_set_id).iter() {
+    for node_id in rule.info_partition[info_set_id].iter() {
         print!("    ");
         print_node(rule, node_id);
         println!(",");
