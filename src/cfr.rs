@@ -98,12 +98,12 @@ fn cfr_dfs(
                         strt,
                         child_id,
                         prob.prod(player, rule.transition[node_id][action_id]),
-                    )
+                    ) * rule.transition[node_id][action_id]
                 })
                 .sum(),
             _ => {
                 let info_set_id = &rule.info_set_id_by_node[node_id];
-                *reach_prob.get_mut(info_set_id).unwrap() += prob.except(player);
+                *reach_prob.get_mut(info_set_id).unwrap() += prob.only(player);
 
                 let action_util: BTreeMap<ActionId, f64> = edges
                     .iter()
