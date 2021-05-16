@@ -1,36 +1,22 @@
 use super::{
-    action::{Action, ActionId},
-    node::{Node, NodeId},
+    action::{Action, ActionId, Distribution},
+    node::{InformationPartition, InformationSetId, Node, NodeId},
     player::Player,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, VecDeque};
 use std::fs;
 
-pub type InformationSet = Vec<NodeId>;
-
-#[derive(Clone, Copy, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord, Debug)]
-pub struct InformationSetId(usize);
-
-impl InformationSetId {
-    pub fn new(i: usize) -> Self {
-        InformationSetId(i)
-    }
-}
-
-pub type InformationPartition = BTreeMap<InformationSetId, InformationSet>;
-
-pub type Transition = BTreeMap<NodeId, BTreeMap<ActionId, f64>>;
+pub type Transition = BTreeMap<NodeId, Distribution>;
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct Rule {
     pub actions: BTreeMap<ActionId, Action>,
     pub nodes: BTreeMap<NodeId, Node>,
     pub root: NodeId,
-    pub info_partitions: BTreeMap<Player, InformationPartition>,
+    pub info_partition: InformationPartition,
     pub transition: Transition,
 
-    // for utils
     #[serde(skip_deserializing, skip_serializing)]
     pub info_set_id_by_node: BTreeMap<NodeId, InformationSetId>,
     #[serde(skip_deserializing, skip_serializing)]
@@ -51,11 +37,9 @@ impl Rule {
 
     fn build_info_set_id_by_node(&mut self) {
         trace!("start: build_info_set_id_by_node");
-        for (_, partition) in self.info_partitions.iter() {
-            for (info_set_id, info_set) in partition.iter() {
-                for node_id in info_set.iter() {
-                    self.info_set_id_by_node.insert(*node_id, *info_set_id);
-                }
+        for (info_set_id, info_set) in self.info_partition.iter() {
+            for node_id in info_set.iter() {
+                self.info_set_id_by_node.insert(*node_id, *info_set_id);
             }
         }
         trace!("finish: build_info_set_id_by_node");
@@ -63,16 +47,14 @@ impl Rule {
 
     fn build_actions_by_info_set(&mut self) {
         trace!("start: build_actions_by_info_set");
-        for (_, partition) in self.info_partitions.iter() {
-            for (info_set_id, info_set) in partition.iter() {
-                for node_id in info_set.iter() {
-                    if let Node::NonTerminal { edges, .. } = &self.nodes[node_id] {
-                        let actions: Vec<ActionId> = edges.keys().cloned().collect();
-                        if self.actions_by_info_set.contains_key(info_set_id) {
-                            assert_eq!(actions, self.actions_by_info_set[info_set_id]);
-                        } else {
-                            self.actions_by_info_set.insert(*info_set_id, actions);
-                        }
+        for (info_set_id, info_set) in self.info_partition.iter() {
+            for node_id in info_set.iter() {
+                if let Node::NonTerminal { edges, .. } = &self.nodes[node_id] {
+                    let actions: Vec<ActionId> = edges.keys().cloned().collect();
+                    if self.actions_by_info_set.contains_key(info_set_id) {
+                        assert_eq!(actions, self.actions_by_info_set[info_set_id]);
+                    } else {
+                        self.actions_by_info_set.insert(*info_set_id, actions);
                     }
                 }
             }
@@ -82,15 +64,13 @@ impl Rule {
 
     fn build_player_by_info_set(&mut self) {
         trace!("start: build_player_by_info_set");
-        for (_, partition) in self.info_partitions.iter() {
-            for (info_set_id, info_set) in partition.iter() {
-                for node_id in info_set.iter() {
-                    if let Node::NonTerminal { player, .. } = &self.nodes[node_id] {
-                        if self.player_by_info_set.contains_key(info_set_id) {
-                            assert_eq!(*player, self.player_by_info_set[info_set_id]);
-                        } else {
-                            self.player_by_info_set.insert(*info_set_id, *player);
-                        }
+        for (info_set_id, info_set) in self.info_partition.iter() {
+            for node_id in info_set.iter() {
+                if let Node::NonTerminal { player, .. } = &self.nodes[node_id] {
+                    if self.player_by_info_set.contains_key(info_set_id) {
+                        assert_eq!(*player, self.player_by_info_set[info_set_id]);
+                    } else {
+                        self.player_by_info_set.insert(*info_set_id, *player);
                     }
                 }
             }
@@ -121,28 +101,6 @@ impl Rule {
                 actions.pop();
             }
         }
-    }
-
-    pub fn info_set_by_id(&self, info_set_id: &InformationSetId) -> &InformationSet {
-        &self.info_partitions[&self.player_by_info_set[info_set_id]][info_set_id]
-    }
-
-    pub fn bfs_ord(&self) -> Vec<NodeId> {
-        let mut ord: Vec<NodeId> = Vec::new();
-        let mut que: VecDeque<NodeId> = VecDeque::new();
-        que.push_back(self.root);
-        ord.push(self.root);
-        while !que.is_empty() {
-            let node_id = *que.front().unwrap();
-            que.pop_front();
-            if let Node::NonTerminal { edges, .. } = &self.nodes[&node_id] {
-                for (_, child_id) in edges.iter() {
-                    que.push_back(*child_id);
-                    ord.push(*child_id);
-                }
-            }
-        }
-        ord
     }
 }
 
@@ -184,19 +142,13 @@ pub mod leduc {
         let mut leduc: Leduc = Default::default();
         leduc.actions = actions;
         leduc.action_id = action_id;
-        leduc
-            .info_partitions
-            .insert(Player::P1, InformationPartition::new());
-        leduc
-            .info_partitions
-            .insert(Player::P2, InformationPartition::new());
         leduc.build();
 
         let mut rule: Rule = Default::default();
         rule.actions = leduc.actions;
         rule.nodes = leduc.nodes;
         rule.root = NodeId::new(0);
-        rule.info_partitions = leduc.info_partitions;
+        rule.info_partition = leduc.info_partition;
         rule.transition = leduc.transition;
         rule.build();
         rule
@@ -210,7 +162,7 @@ pub mod leduc {
         node_id: usize,
         transition: Transition,
         observations: BTreeMap<Vec<&'static str>, usize>,
-        info_partitions: BTreeMap<Player, InformationPartition>,
+        info_partition: InformationPartition,
         info_set_id: usize,
     }
 
@@ -281,9 +233,7 @@ pub mod leduc {
                     let obs = observation(&s, player);
                     if self.observations.contains_key(&obs) {
                         let info_set_id = InformationSetId::new(self.observations[&obs]);
-                        self.info_partitions
-                            .get_mut(&player)
-                            .unwrap()
+                        self.info_partition
                             .get_mut(&info_set_id)
                             .unwrap()
                             .push(s.node_id);
@@ -291,10 +241,7 @@ pub mod leduc {
                         let info_set_id = InformationSetId::new(self.info_set_id);
                         self.observations.insert(obs, self.info_set_id);
                         self.info_set_id += 1;
-                        self.info_partitions
-                            .get_mut(&player)
-                            .unwrap()
-                            .insert(info_set_id, vec![s.node_id]);
+                        self.info_partition.insert(info_set_id, vec![s.node_id]);
                     }
 
                     let mut edges: BTreeMap<ActionId, NodeId> = BTreeMap::new();
@@ -460,7 +407,7 @@ pub mod leduc {
         return None;
     }
 
-    fn terminal_val(s: &State) -> Option<i32> {
+    fn terminal_val(s: &State) -> Option<f64> {
         let n = s.history.len();
         if n == 0 {
             return None;
@@ -468,7 +415,7 @@ pub mod leduc {
 
         if s.history[n - 1] == "Fold" {
             let myself = s.last_player.unwrap();
-            return Some(-myself.sign() * (s.bet[&myself] + (s.pot >> 1)));
+            return Some(-myself.sign() * (s.bet[&myself] + (s.pot >> 1)) as f64);
         }
 
         if s.history.iter().any(|&action| action.starts_with("Flop")) {
@@ -481,9 +428,9 @@ pub mod leduc {
                     s.hole_card.unwrap(),
                 );
                 if let Some(winner) = winner {
-                    return Some(winner.sign() * (s.bet[&winner] + (s.pot >> 1)));
+                    return Some(winner.sign() * (s.bet[&winner] + (s.pot >> 1)) as f64);
                 } else {
-                    return Some(0);
+                    return Some(0.0);
                 }
             }
         }

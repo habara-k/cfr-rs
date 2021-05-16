@@ -1,9 +1,8 @@
 use super::{
     action::ActionId,
-    node::NodeId,
-    player::Player,
-    profile::Profile,
-    rule::{InformationSetId, Rule},
+    node::{InformationSetId, NodeId},
+    rule::Rule,
+    strategy::Strategy,
 };
 use std::collections::BTreeMap;
 
@@ -21,7 +20,7 @@ pub fn print_node(rule: &Rule, node_id: &NodeId) {
 
 pub fn print_info_set(rule: &Rule, info_set_id: &InformationSetId) {
     println!("[");
-    for node_id in rule.info_set_by_id(info_set_id).iter() {
+    for node_id in rule.info_partition[info_set_id].iter() {
         print!("    ");
         print_node(rule, node_id);
         println!(",");
@@ -37,16 +36,12 @@ pub fn print_dist(rule: &Rule, dist: &BTreeMap<ActionId, f64>) {
     print!("  }}");
 }
 
-pub fn print_prof(rule: &Rule, prof: &Profile) {
-    for player in [Player::P1, Player::P2].iter() {
-        println!("{:?}: {{", player);
-        for (info_set_id, dist) in prof[player].iter() {
-            print!("  ");
-            print_info_set(rule, info_set_id);
-            print!(": ");
-            print_dist(rule, dist);
-            println!(",");
-        }
-        println!("}}");
+pub fn print_strt(rule: &Rule, strt: &Strategy) {
+    for (info_set_id, dist) in strt.iter() {
+        print!("  ");
+        print_info_set(rule, info_set_id);
+        print!(": ");
+        print_dist(rule, dist);
+        println!(",");
     }
 }

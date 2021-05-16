@@ -13,12 +13,12 @@ The library calculates ε-Nash equilibrium of **all** Imperfect-Information Exte
 
 You can calculate an ε-Nash equilibrium strategy for [Kuhn poker](https://en.wikipedia.org/wiki/Kuhn_poker) in `1,000,000` steps.
 ```
-$ cargo run --release kuhn 1000000
+$ cargo run --release --bin main kuhn 1000000
 ```
 
 You can also calculate an ε-Nash equilibrium strategy for [Glico(Weighted Rock Paper Scissors)](https://ja.wikipedia.org/wiki/%E3%82%B0%E3%83%AA%E3%82%B3_(%E9%81%8A%E3%81%B3)) :)
 ```
-$ cargo run --release glico 1000000
+$ cargo run --release --bin main glico 1000000
 ```
 
 ## Bench
@@ -29,13 +29,13 @@ $ cargo run --release glico 1000000
   - 3.2 GHz CPU
   - 8 GB RAM
 
-The library calculates a strategy in `47.3 ± 0.2` sec.
+The library calculates a strategy in `17.3 ± 0.2` sec.
 
 The game value (the score that both players can achieve no matter what strategy the other player uses) of Kuhn poker is `-1/18 = -0.055555...`.
 
 The strategy calculated above guarantees that
 
-- player1 can achieve a score of `-0.055643...` at worst.
+- player1 can achieve a score of `-0.055644...` at worst.
 - player2 can achieve a score of `-0.055206...` at worst.
 
 ## Licence

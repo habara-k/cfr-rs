@@ -11,7 +11,7 @@ impl NodeId {
     }
 }
 
-pub type NodeValue = i32;
+pub type NodeValue = f64;
 
 #[derive(Clone, Deserialize, Serialize)]
 pub enum Node {
@@ -60,3 +60,16 @@ impl Node {
         }
     }
 }
+
+pub type InformationSet = Vec<NodeId>;
+
+#[derive(Clone, Copy, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub struct InformationSetId(usize);
+
+impl InformationSetId {
+    pub fn new(i: usize) -> Self {
+        InformationSetId(i)
+    }
+}
+
+pub type InformationPartition = BTreeMap<InformationSetId, InformationSet>;

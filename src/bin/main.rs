@@ -30,31 +30,31 @@ fn main() {
         .expect("no step given")
         .parse::<usize>()
         .expect("step must be usize");
-    let uniform_prof = profile::uniform(&rule);
+    let uniform_strt = strategy::uniform(&rule);
 
     info!(
         "uniform exploitability: {}",
-        solver::calc_exploitability(&rule, &uniform_prof)
+        solver::calc_exploitability(&rule, &uniform_strt)
     );
 
-    let prof = measure!({ cfr::calc_nash_strt(&rule, uniform_prof, step) });
+    let strt = measure!({ cfr::calc_nash_strt(&rule, uniform_strt, step) });
 
-    // visualizer::print_prof(&rule, &prof);
+    visualizer::print_strt(&rule, &strt);
 
-    println!("expected value: {:.6}", solver::calc_ev(&rule, &prof));
+    println!("expected value: {:.6}", solver::calc_ev(&rule, &strt));
 
     println!(
         "P1 can achieve at worst: {:.8}",
-        solver::calc_best_resp_against_to(&rule, Player::P1, prof[&Player::P1].clone()).1
+        solver::calc_best_resp(&rule, &Player::P2, &strt)
     );
     println!(
         "P2 can achieve at worst: {:.8}",
-        solver::calc_best_resp_against_to(&rule, Player::P2, prof[&Player::P2].clone()).1
+        solver::calc_best_resp(&rule, &Player::P1, &strt)
     );
 
     info!(
         "exploitability: {}",
-        solver::calc_exploitability(&rule, &prof)
+        solver::calc_exploitability(&rule, &strt)
     );
 
     trace!("finish: main");
