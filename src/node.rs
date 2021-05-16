@@ -11,7 +11,7 @@ impl NodeId {
     }
 }
 
-pub type NodeValue = i32;
+pub type NodeValue = f64;
 
 #[derive(Clone, Deserialize, Serialize)]
 pub enum Node {

@@ -17,7 +17,6 @@ pub struct Rule {
     pub info_partition: InformationPartition,
     pub transition: Transition,
 
-    // for utils
     #[serde(skip_deserializing, skip_serializing)]
     pub info_set_id_by_node: BTreeMap<NodeId, InformationSetId>,
     #[serde(skip_deserializing, skip_serializing)]
@@ -102,24 +101,6 @@ impl Rule {
                 actions.pop();
             }
         }
-    }
-
-    pub fn bfs_ord(&self) -> Vec<NodeId> {
-        let mut ord: Vec<NodeId> = Vec::new();
-        let mut que: VecDeque<NodeId> = VecDeque::new();
-        que.push_back(self.root);
-        ord.push(self.root);
-        while !que.is_empty() {
-            let node_id = *que.front().unwrap();
-            que.pop_front();
-            if let Node::NonTerminal { edges, .. } = &self.nodes[&node_id] {
-                for (_, child_id) in edges.iter() {
-                    que.push_back(*child_id);
-                    ord.push(*child_id);
-                }
-            }
-        }
-        ord
     }
 }
 
@@ -426,7 +407,7 @@ pub mod leduc {
         return None;
     }
 
-    fn terminal_val(s: &State) -> Option<i32> {
+    fn terminal_val(s: &State) -> Option<f64> {
         let n = s.history.len();
         if n == 0 {
             return None;
@@ -434,7 +415,7 @@ pub mod leduc {
 
         if s.history[n - 1] == "Fold" {
             let myself = s.last_player.unwrap();
-            return Some(-myself.sign() * (s.bet[&myself] + (s.pot >> 1)));
+            return Some(-myself.sign() * (s.bet[&myself] + (s.pot >> 1)) as f64);
         }
 
         if s.history.iter().any(|&action| action.starts_with("Flop")) {
@@ -447,9 +428,9 @@ pub mod leduc {
                     s.hole_card.unwrap(),
                 );
                 if let Some(winner) = winner {
-                    return Some(winner.sign() * (s.bet[&winner] + (s.pot >> 1)));
+                    return Some(winner.sign() * (s.bet[&winner] + (s.pot >> 1)) as f64);
                 } else {
-                    return Some(0);
+                    return Some(0.0);
                 }
             }
         }

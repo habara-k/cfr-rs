@@ -16,10 +16,10 @@ impl Player {
         }
     }
 
-    pub fn sign(&self) -> i32 {
+    pub fn sign(&self) -> f64 {
         match self {
-            Player::P1 => 1,
-            Player::P2 => -1,
+            Player::P1 => 1.0,
+            Player::P2 => -1.0,
             Player::C => panic!("Player::C has no sign"),
         }
     }

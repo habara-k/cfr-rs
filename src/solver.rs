@@ -6,7 +6,7 @@ use super::{
     strategy::Strategy,
 };
 use ord_subset::OrdSubsetIterExt;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, VecDeque};
 
 pub fn calc_ev(rule: &Rule, strt: &Strategy) -> f64 {
     calc_ev_inner(rule, strt, &rule.root, 1.0)
@@ -14,7 +14,7 @@ pub fn calc_ev(rule: &Rule, strt: &Strategy) -> f64 {
 
 fn calc_ev_inner(rule: &Rule, strt: &Strategy, node_id: &NodeId, prob: f64) -> f64 {
     match &rule.nodes[node_id] {
-        Node::Terminal { value } => *value as f64 * prob,
+        Node::Terminal { value } => *value * prob,
         Node::NonTerminal { edges, player } => match player {
             Player::C => &rule.transition[node_id],
             _ => &strt[&rule.info_set_id_by_node[node_id]],
@@ -25,8 +25,26 @@ fn calc_ev_inner(rule: &Rule, strt: &Strategy, node_id: &NodeId, prob: f64) -> f
     }
 }
 
+fn bfs_ord(rule: &Rule) -> Vec<NodeId> {
+    let mut ord: Vec<NodeId> = Vec::new();
+    let mut que: VecDeque<NodeId> = VecDeque::new();
+    que.push_back(rule.root);
+    ord.push(rule.root);
+    while !que.is_empty() {
+        let node_id = *que.front().unwrap();
+        que.pop_front();
+        if let Node::NonTerminal { edges, .. } = &rule.nodes[&node_id] {
+            for (_, child_id) in edges.iter() {
+                que.push_back(*child_id);
+                ord.push(*child_id);
+            }
+        }
+    }
+    ord
+}
+
 pub fn calc_best_resp(rule: &Rule, myself: &Player, strt: &Strategy) -> f64 {
-    let prob_to_reach_terminal_node = calc_prob_to_reach_terminal_node(rule, &strt);
+    let reach_pr = calc_prob_to_reach_terminal_node(rule, &strt);
 
     let best_action_at =
         |utils: &BTreeMap<NodeId, f64>, info_set_id: &InformationSetId| -> &ActionId {
@@ -38,12 +56,12 @@ pub fn calc_best_resp(rule: &Rule, myself: &Player, strt: &Strategy) -> f64 {
                         .iter()
                         .map(|node_id| utils[&rule.nodes[node_id].edges()[action_id]])
                         .sum::<f64>()
-                        * myself.sign() as f64
+                        * myself.sign()
                 })
                 .unwrap()
         };
 
-    let ord = rule.bfs_ord();
+    let ord = bfs_ord(rule);
     trace!("ord: {:?}", ord);
     let mut utils: BTreeMap<NodeId, f64> = BTreeMap::new();
     let mut best_actions: BTreeMap<InformationSetId, ActionId> = BTreeMap::new();
@@ -51,10 +69,7 @@ pub fn calc_best_resp(rule: &Rule, myself: &Player, strt: &Strategy) -> f64 {
     for node_id in ord.iter().rev() {
         match &rule.nodes[node_id] {
             Node::Terminal { value } => {
-                utils.insert(
-                    *node_id,
-                    (*value as f64) * prob_to_reach_terminal_node[node_id].except(myself),
-                );
+                utils.insert(*node_id, *value * reach_pr[node_id].except(myself));
             }
             Node::NonTerminal { player, edges } => {
                 utils.insert(
