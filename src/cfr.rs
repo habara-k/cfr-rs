@@ -183,9 +183,13 @@ pub fn calc_nash_strt(rule: &Rule, init_strt: Strategy, step: usize) -> Strategy
 
     strt_sum
         .iter()
-        .map(|(info_set_id, dist)| (*info_set_id, {
-            let norm: f64 = dist.values().sum();
-            dist.iter().map(|(action_id, prob)| (*action_id, prob / norm)).collect()
-        }))
+        .map(|(info_set_id, dist)| {
+            (*info_set_id, {
+                let norm: f64 = dist.values().sum();
+                dist.iter()
+                    .map(|(action_id, prob)| (*action_id, prob / norm))
+                    .collect()
+            })
+        })
         .collect()
 }
