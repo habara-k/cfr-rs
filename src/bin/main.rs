@@ -45,11 +45,11 @@ fn main() {
 
     println!(
         "P1 can achieve at worst: {:.8}",
-        solver::calc_best_resp(&rule, &Player::P1, &strt)
+        solver::calc_best_resp(&rule, &Player::P2, &strt)
     );
     println!(
         "P2 can achieve at worst: {:.8}",
-        solver::calc_best_resp(&rule, &Player::P2, &strt)
+        solver::calc_best_resp(&rule, &Player::P1, &strt)
     );
 
     info!(

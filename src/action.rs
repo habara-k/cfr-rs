@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
 #[derive(Clone, Copy, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct ActionId(usize);
@@ -16,3 +17,5 @@ impl Action {
         Action(String::from(action))
     }
 }
+
+pub type Distribution = BTreeMap<ActionId, f64>;

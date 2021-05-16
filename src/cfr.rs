@@ -1,9 +1,9 @@
 use super::{
     action::ActionId,
-    node::{Node, NodeId},
+    node::{InformationSetId, Node, NodeId},
     player::{Player, ProbContribute},
+    rule::Rule,
     strategy::{self, Strategy},
-    rule::{InformationSetId, Rule},
 };
 use indicatif::ProgressIterator;
 use std::collections::BTreeMap;
@@ -12,23 +12,30 @@ struct Regret(BTreeMap<InformationSetId, BTreeMap<ActionId, f64>>);
 
 impl Regret {
     fn new(rule: &Rule) -> Self {
-        Regret(rule.info_partition
-            .iter()
-            .map(|(info_set_id, _)| (
-                *info_set_id,
-                rule.actions_by_info_set[info_set_id]
-                    .iter()
-                    .map(|action_id| (*action_id, 0.0))
-                    .collect(),
-            ))
-            .collect())
+        Regret(
+            rule.info_partition
+                .iter()
+                .map(|(info_set_id, _)| {
+                    (
+                        *info_set_id,
+                        rule.actions_by_info_set[info_set_id]
+                            .iter()
+                            .map(|action_id| (*action_id, 0.0))
+                            .collect(),
+                    )
+                })
+                .collect(),
+        )
     }
     fn to_strategy(&self) -> Strategy {
-        self.0.iter()
-            .map(|(info_set_id, v)| (
-                *info_set_id,
-                Regret::normalized(Regret::positive_part(v.clone()))
-            ))
+        self.0
+            .iter()
+            .map(|(info_set_id, v)| {
+                (
+                    *info_set_id,
+                    Regret::normalized(Regret::positive_part(v.clone())),
+                )
+            })
             .collect()
     }
 
@@ -40,7 +47,12 @@ impl Regret {
 
     fn add_at(&mut self, info_set_id: &InformationSetId, regret: &BTreeMap<ActionId, f64>) {
         for (action_id, reg) in regret {
-            *self.0.get_mut(info_set_id).unwrap().get_mut(action_id).unwrap() += reg;
+            *self
+                .0
+                .get_mut(info_set_id)
+                .unwrap()
+                .get_mut(action_id)
+                .unwrap() += reg;
         }
     }
 
@@ -65,39 +77,71 @@ impl Regret {
     }
 }
 
-
-fn cfr_dfs(rule: &Rule, regret: &mut Regret, reach_pr: &mut BTreeMap<InformationSetId, f64>, strt: &Strategy, node_id: &NodeId, prob: ProbContribute) -> f64 {
+fn cfr_dfs(
+    rule: &Rule,
+    regret: &mut Regret,
+    reach_prob: &mut BTreeMap<InformationSetId, f64>,
+    strt: &Strategy,
+    node_id: &NodeId,
+    prob: ProbContribute,
+) -> f64 {
     match &rule.nodes[node_id] {
-        Node::Terminal{ value } => {
-            *value as f64
-        },
-        Node::NonTerminal{ player, edges } => {
-            match player {
-                Player::C => {
-                    edges.iter().map(|(action_id, child_id)| {
-                        cfr_dfs(rule, regret, reach_pr, strt, child_id, prob.prod(player, rule.transition[node_id][action_id]))
-                    }).sum()
-                },
-                _ => {
-                    let info_set_id = &rule.info_set_id_by_node[node_id];
-                    *reach_pr.get_mut(info_set_id).unwrap() += prob.except(player);
+        Node::Terminal { value } => *value as f64,
+        Node::NonTerminal { player, edges } => match player {
+            Player::C => edges
+                .iter()
+                .map(|(action_id, child_id)| {
+                    cfr_dfs(
+                        rule,
+                        regret,
+                        reach_prob,
+                        strt,
+                        child_id,
+                        prob.prod(player, rule.transition[node_id][action_id]),
+                    )
+                })
+                .sum(),
+            _ => {
+                let info_set_id = &rule.info_set_id_by_node[node_id];
+                *reach_prob.get_mut(info_set_id).unwrap() += prob.except(player);
 
-                    let action_util: BTreeMap<ActionId, f64> = edges.iter().map(|(action_id, child_id)| (
-                        *action_id,
-                        cfr_dfs(rule, regret, reach_pr, strt, child_id, prob.prod(player, strt[info_set_id][action_id]))
-                    )).collect();
+                let action_util: BTreeMap<ActionId, f64> = edges
+                    .iter()
+                    .map(|(action_id, child_id)| {
+                        (
+                            *action_id,
+                            cfr_dfs(
+                                rule,
+                                regret,
+                                reach_prob,
+                                strt,
+                                child_id,
+                                prob.prod(player, strt[info_set_id][action_id]),
+                            ),
+                        )
+                    })
+                    .collect();
 
-                    let ret: f64 = action_util.iter()
-                        .map(|(action_id, util)| strt[info_set_id][action_id] * util)
-                        .sum();
+                let ret: f64 = action_util
+                    .iter()
+                    .map(|(action_id, util)| strt[info_set_id][action_id] * util)
+                    .sum();
 
-                    regret.add_at(info_set_id, &action_util.iter()
-                        .map(|(action_id, util)| (*action_id, player.sign() as f64 * (util - ret) * prob.except(player)))
-                        .collect::<BTreeMap<ActionId,f64>>());
-                    ret
-                }
+                regret.add_at(
+                    info_set_id,
+                    &action_util
+                        .iter()
+                        .map(|(action_id, util)| {
+                            (
+                                *action_id,
+                                player.sign() as f64 * (util - ret) * prob.except(player),
+                            )
+                        })
+                        .collect::<BTreeMap<ActionId, f64>>(),
+                );
+                ret
             }
-        }
+        },
     }
 }
 
@@ -109,13 +153,27 @@ pub fn calc_nash_strt(rule: &Rule, init_strt: Strategy, step: usize) -> Strategy
 
     for _ in (1..step + 1).progress() {
         let mut regret = Regret::new(rule);
-        let mut reach_pr: BTreeMap<InformationSetId, f64> = rule.info_partition.iter()
-            .map(|(info_set_id, _)| (*info_set_id, 0.0)).collect();
-        cfr_dfs(rule, &mut regret, &mut reach_pr, &latest_strt, &rule.root, ProbContribute::new());
+        let mut reach_prob: BTreeMap<InformationSetId, f64> = rule
+            .info_partition
+            .iter()
+            .map(|(info_set_id, _)| (*info_set_id, 0.0))
+            .collect();
+        cfr_dfs(
+            rule,
+            &mut regret,
+            &mut reach_prob,
+            &latest_strt,
+            &rule.root,
+            ProbContribute::new(),
+        );
 
-        for (info_set_id, reach) in &reach_pr {
+        for (info_set_id, reach) in &reach_prob {
             for (action, strt) in &latest_strt[info_set_id] {
-                *strt_sum.get_mut(info_set_id).unwrap().get_mut(action).unwrap() += reach * strt;
+                *strt_sum
+                    .get_mut(info_set_id)
+                    .unwrap()
+                    .get_mut(action)
+                    .unwrap() += reach * strt;
             }
         }
         regret_sum.add(&regret);
@@ -123,9 +181,11 @@ pub fn calc_nash_strt(rule: &Rule, init_strt: Strategy, step: usize) -> Strategy
         latest_strt = regret_sum.to_strategy();
     }
 
-    strt_sum.iter()
-        .map(|(info_set_id, dist)| (
-            *info_set_id,
-            Regret::normalized(dist.clone())
-        )).collect()
+    strt_sum
+        .iter()
+        .map(|(info_set_id, dist)| (*info_set_id, {
+            let norm: f64 = dist.values().sum();
+            dist.iter().map(|(action_id, prob)| (*action_id, prob / norm)).collect()
+        }))
+        .collect()
 }

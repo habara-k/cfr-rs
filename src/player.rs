@@ -34,7 +34,11 @@ pub struct ProbContribute {
 
 impl ProbContribute {
     pub fn new() -> Self {
-        ProbContribute{ p1: 1.0, p2: 1.0, c: 1.0 }
+        ProbContribute {
+            p1: 1.0,
+            p2: 1.0,
+            c: 1.0,
+        }
     }
     pub fn only(&self, player: &Player) -> f64 {
         match player {
@@ -52,16 +56,18 @@ impl ProbContribute {
     }
     pub fn prod(&self, player: &Player, prob: f64) -> Self {
         match player {
-            Player::P1 => {
-                Self { p1: self.p1 * prob, ..*self }
+            Player::P1 => Self {
+                p1: self.p1 * prob,
+                ..*self
             },
-            Player::P2 => {
-                Self { p2: self.p2 * prob, ..*self }
+            Player::P2 => Self {
+                p2: self.p2 * prob,
+                ..*self
             },
-            Player::C => {
-                Self { c: self.c * prob, ..*self }
+            Player::C => Self {
+                c: self.c * prob,
+                ..*self
             },
         }
     }
 }
-

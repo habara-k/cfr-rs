@@ -1,26 +1,13 @@
 use super::{
-    action::{Action, ActionId},
-    node::{Node, NodeId},
+    action::{Action, ActionId, Distribution},
+    node::{InformationPartition, InformationSetId, Node, NodeId},
     player::Player,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, VecDeque};
 use std::fs;
 
-pub type InformationSet = Vec<NodeId>;
-
-#[derive(Clone, Copy, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord, Debug)]
-pub struct InformationSetId(usize);
-
-impl InformationSetId {
-    pub fn new(i: usize) -> Self {
-        InformationSetId(i)
-    }
-}
-
-pub type InformationPartition = BTreeMap<InformationSetId, InformationSet>;
-
-pub type Transition = BTreeMap<NodeId, BTreeMap<ActionId, f64>>;
+pub type Transition = BTreeMap<NodeId, Distribution>;
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct Rule {
@@ -273,8 +260,7 @@ pub mod leduc {
                         let info_set_id = InformationSetId::new(self.info_set_id);
                         self.observations.insert(obs, self.info_set_id);
                         self.info_set_id += 1;
-                        self.info_partition
-                            .insert(info_set_id, vec![s.node_id]);
+                        self.info_partition.insert(info_set_id, vec![s.node_id]);
                     }
 
                     let mut edges: BTreeMap<ActionId, NodeId> = BTreeMap::new();

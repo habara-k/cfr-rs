@@ -1,14 +1,11 @@
-use super::{
-    action::ActionId,
-    rule::{InformationSetId, Rule},
-};
+use super::{action::Distribution, node::InformationSetId, rule::Rule};
 use std::collections::BTreeMap;
 use std::fs;
 
-pub type Strategy = BTreeMap<InformationSetId, BTreeMap<ActionId, f64>>;
+pub type Strategy = BTreeMap<InformationSetId, Distribution>;
 
 pub fn ones(rule: &Rule) -> Strategy {
-    filled_with(rule,  &1.0)
+    filled_with(rule, &1.0)
 }
 
 pub fn zeros(rule: &Rule) -> Strategy {
@@ -18,28 +15,30 @@ pub fn zeros(rule: &Rule) -> Strategy {
 pub fn filled_with(rule: &Rule, prob: &f64) -> Strategy {
     rule.info_partition
         .iter()
-        .map(|(info_set_id, _)| (
-            *info_set_id, 
-            rule.actions_by_info_set[info_set_id]
-                .iter()
-                .map(|action_id| (*action_id, *prob))
-                .collect()
-        ))
+        .map(|(info_set_id, _)| {
+            (
+                *info_set_id,
+                rule.actions_by_info_set[info_set_id]
+                    .iter()
+                    .map(|action_id| (*action_id, *prob))
+                    .collect(),
+            )
+        })
         .collect()
 }
 
 pub fn uniform(rule: &Rule) -> Strategy {
     rule.info_partition
         .iter()
-        .map(|(info_set_id, _)| (
-            *info_set_id, {
+        .map(|(info_set_id, _)| {
+            (*info_set_id, {
                 let prob = 1.0 / rule.actions_by_info_set[info_set_id].len() as f64;
                 rule.actions_by_info_set[info_set_id]
                     .iter()
                     .map(|action_id| (*action_id, prob))
                     .collect()
-            }
-        ))
+            })
+        })
         .collect()
 }
 

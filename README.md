@@ -29,14 +29,14 @@ $ cargo run --release glico 1000000
   - 3.2 GHz CPU
   - 8 GB RAM
 
-The library calculates a strategy in `47.3 ± 0.2` sec.
+The library calculates a strategy in `24.2 ± 0.6` sec.
 
 The game value (the score that both players can achieve no matter what strategy the other player uses) of Kuhn poker is `-1/18 = -0.055555...`.
 
 The strategy calculated above guarantees that
 
-- player1 can achieve a score of `-0.055643...` at worst.
-- player2 can achieve a score of `-0.055206...` at worst.
+- player1 can achieve a score of `-0.055666...` at worst.
+- player2 can achieve a score of `-0.055152...` at worst.
 
 ## Licence
 

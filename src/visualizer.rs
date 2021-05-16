@@ -1,8 +1,8 @@
 use super::{
     action::ActionId,
-    node::NodeId,
+    node::{InformationSetId, NodeId},
+    rule::Rule,
     strategy::Strategy,
-    rule::{InformationSetId, Rule},
 };
 use std::collections::BTreeMap;
 
