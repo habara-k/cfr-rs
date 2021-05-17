@@ -37,6 +37,7 @@ pub fn print_dist(rule: &Rule, dist: &BTreeMap<ActionId, f64>) {
 }
 
 pub fn print_strt(rule: &Rule, strt: &Strategy) {
+    println!("{{");
     for (info_set_id, dist) in strt.iter() {
         print!("  ");
         print_info_set(rule, info_set_id);
@@ -44,4 +45,5 @@ pub fn print_strt(rule: &Rule, strt: &Strategy) {
         print_dist(rule, dist);
         println!(",");
     }
+    println!("}}");
 }

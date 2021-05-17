@@ -1,3 +1,5 @@
+//! Provide basic calculations.
+
 use super::{
     action::ActionId,
     node::{InformationSetId, Node, NodeId},
@@ -8,6 +10,16 @@ use super::{
 use ord_subset::OrdSubsetIterExt;
 use std::collections::{BTreeMap, VecDeque};
 
+/// Calculate the expected value.
+/// # Example
+/// ```
+/// use cfr_rs::*;
+/// use approx_eq::assert_approx_eq;
+///
+/// let rule = rule::from_name("kuhn");
+/// let strt = strategy::from_name("kuhn_nash");
+/// assert_approx_eq!(solver::calc_ev(&rule, &strt), -1.0 / 18.0); // The optimal expected value is `-1/18`
+/// ```
 pub fn calc_ev(rule: &Rule, strt: &Strategy) -> f64 {
     calc_ev_inner(rule, strt, &rule.root, 1.0)
 }
@@ -43,6 +55,21 @@ fn bfs_ord(rule: &Rule) -> Vec<NodeId> {
     ord
 }
 
+/// Calculate the optimal value of the expected value when `myself` is free to change the strategy.
+/// # Example
+/// ```
+/// use cfr_rs::*;
+/// use approx_eq::assert_approx_eq;
+///
+/// let rule = rule::from_name("kuhn");
+/// let strt = strategy::from_name("kuhn_nash");
+/// assert_approx_eq!(solver::calc_best_resp(&rule, &player::Player::P1, &strt), -1.0 / 18.0); // The expected value cannot changes.
+/// assert_approx_eq!(solver::calc_best_resp(&rule, &player::Player::P2, &strt), -1.0 / 18.0); // The expected value cannot changes.
+///
+/// let strt = strategy::uniform(&rule);
+/// assert!(solver::calc_best_resp(&rule, &player::Player::P1, &strt) >= -1.0 / 18.0);  // The expected value never decreases.
+/// assert!(solver::calc_best_resp(&rule, &player::Player::P2, &strt) <= -1.0 / 18.0);  // The expected value never increases.
+/// ```
 pub fn calc_best_resp(rule: &Rule, myself: &Player, strt: &Strategy) -> f64 {
     let reach_pr: BTreeMap<NodeId, f64> = calc_prob_to_reach_terminal_node(rule, &strt)
         .iter()
@@ -175,6 +202,19 @@ fn calc_prob_to_reach_terminal_node_inner(
     }
 }
 
+/// Calculate *exploitability*
+/// # Example
+/// ```
+/// use cfr_rs::*;
+/// use approx_eq::assert_approx_eq;
+///
+/// let rule = rule::from_name("kuhn");
+/// let strt = strategy::from_name("kuhn_nash");
+/// assert_approx_eq!(solver::calc_exploitability(&rule, &strt), 0.0); // The nash strategy has zero exploitability.
+///
+/// let strt = strategy::uniform(&rule);
+/// assert!(solver::calc_exploitability(&rule, &strt) >= 0.0); // The exploitability cannot be negative.
+/// ```
 pub fn calc_exploitability(rule: &Rule, strt: &Strategy) -> f64 {
     calc_best_resp(rule, &Player::P1, strt) - calc_best_resp(rule, &Player::P2, strt)
 }

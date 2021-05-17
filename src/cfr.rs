@@ -1,3 +1,5 @@
+//! Provide CFR calculations.
+
 use super::{
     action::ActionId,
     node::{InformationSetId, Node, NodeId},
@@ -8,7 +10,59 @@ use super::{
 use indicatif::ProgressIterator;
 use std::collections::BTreeMap;
 
-type Regret = BTreeMap<InformationSetId, BTreeMap<ActionId, f64>>;
+/// Calculate an ε-Nash strategy
+/// # Example
+/// ```
+/// use cfr_rs::*;
+/// let rule = rule::from_name("kuhn");
+/// let step = 1000;
+/// let strt = cfr::calc_nash_strt(&rule, strategy::uniform(&rule), step);
+/// ```
+pub fn calc_nash_strt(rule: &Rule, init_strt: Strategy, step: usize) -> Strategy {
+    let mut regret_sum = regret::new(rule);
+    let mut latest_strt = init_strt;
+    let mut strt_sum = strategy::new(rule);
+
+    for _ in (1..step + 1).progress() {
+        cfr_dfs(
+            rule,
+            &mut regret_sum,
+            &mut strt_sum,
+            &latest_strt,
+            &rule.root,
+            1.0,
+            1.0,
+            1.0,
+        );
+
+        latest_strt = to_strategy(&regret_sum);
+    }
+
+    strt_sum
+        .into_iter()
+        .map(|(info_set_id, dist)| (info_set_id, normalized(dist)))
+        .collect()
+}
+
+mod regret {
+    use super::*;
+    pub type Regret = BTreeMap<InformationSetId, BTreeMap<ActionId, f64>>;
+    pub fn new(rule: &Rule) -> Regret {
+        rule.info_partition
+            .iter()
+            .map(|(info_set_id, _)| {
+                (
+                    *info_set_id,
+                    rule.actions_by_info_set[info_set_id]
+                        .iter()
+                        .map(|action_id| (*action_id, 0.0))
+                        .collect(),
+                )
+            })
+            .collect()
+    }
+}
+use regret::Regret;
 
 fn to_strategy(regret: &Regret) -> Strategy {
     regret
@@ -151,43 +205,4 @@ fn cfr_dfs(
             ret
         }
     }
-}
-
-pub fn calc_nash_strt(rule: &Rule, init_strt: Strategy, step: usize) -> Strategy {
-    let mut regret_sum = rule
-        .info_partition
-        .iter()
-        .map(|(info_set_id, _)| {
-            (
-                *info_set_id,
-                rule.actions_by_info_set[info_set_id]
-                    .iter()
-                    .map(|action_id| (*action_id, 0.0))
-                    .collect(),
-            )
-        })
-        .collect();
-
-    let mut latest_strt = init_strt;
-    let mut strt_sum = strategy::zeros(rule);
-
-    for _ in (1..step + 1).progress() {
-        cfr_dfs(
-            rule,
-            &mut regret_sum,
-            &mut strt_sum,
-            &latest_strt,
-            &rule.root,
-            1.0,
-            1.0,
-            1.0,
-        );
-
-        latest_strt = to_strategy(&regret_sum);
-    }
-
-    strt_sum
-        .into_iter()
-        .map(|(info_set_id, dist)| (info_set_id, normalized(dist)))
-        .collect()
 }

@@ -1,18 +1,13 @@
-use super::{action::Distribution, node::InformationSetId, rule::Rule};
+//! Representation of *strategy* (probability distribution for possible *actions* in each *information set*)
+
+use super::{action::ActionId, node::InformationSetId, rule::Rule};
 use std::collections::BTreeMap;
 use std::fs;
 
-pub type Strategy = BTreeMap<InformationSetId, Distribution>;
+pub type Strategy = BTreeMap<InformationSetId, BTreeMap<ActionId, f64>>;
 
-pub fn ones(rule: &Rule) -> Strategy {
-    filled_with(rule, &1.0)
-}
-
-pub fn zeros(rule: &Rule) -> Strategy {
-    filled_with(rule, &0.0)
-}
-
-pub fn filled_with(rule: &Rule, prob: &f64) -> Strategy {
+/// Get the `Strategy` filled with zeros.
+pub fn new(rule: &Rule) -> Strategy {
     rule.info_partition
         .iter()
         .map(|(info_set_id, _)| {
@@ -20,13 +15,14 @@ pub fn filled_with(rule: &Rule, prob: &f64) -> Strategy {
                 *info_set_id,
                 rule.actions_by_info_set[info_set_id]
                     .iter()
-                    .map(|action_id| (*action_id, *prob))
+                    .map(|action_id| (*action_id, 0.0))
                     .collect(),
             )
         })
         .collect()
 }
 
+/// Get a uniform `Strategy` (taking actions with equal probability).
 pub fn uniform(rule: &Rule) -> Strategy {
     rule.info_partition
         .iter()
@@ -42,15 +38,44 @@ pub fn uniform(rule: &Rule) -> Strategy {
         .collect()
 }
 
+/// Get the `Strategy` from the JSON string
+/// # Example
+/// ```
+/// use cfr_rs::*;
+/// let strt = strategy::from_json(r#"{
+///   "0": {
+///     "0": 0.40,
+///     "1": 0.20,
+///     "2": 0.40
+///   },
+///   "1": {
+///     "0": 0.40,
+///     "1": 0.20,
+///     "2": 0.40
+///   }
+/// }"#);   // A nash strategy of Glico(weighted rock paper scissors)
+/// ```
 pub fn from_json(json: &str) -> Strategy {
     let strt: Strategy = serde_json::from_str(json).expect("failed to deserialize json");
     strt
 }
 
+/// Get the `Strategy` from the JSON file.
+/// # Example
+/// ```
+/// use cfr_rs::*;
+/// let strt = strategy::from_file("src/strategy/kuhn_nash.json"); // A nash strategy of Kuhn poker
+/// ```
 pub fn from_file(path: &str) -> Strategy {
     from_json(&fs::read_to_string(path).expect("failed to read file"))
 }
 
+/// Get a `Strategy` from its name.
+/// # Example
+/// ```
+/// use cfr_rs::*;
+/// let strt = strategy::from_name("kuhn_nash"); // A nash strategy of Kuhn poker
+/// ```
 pub fn from_name(strt_name: &str) -> Strategy {
     match strt_name {
         "kuhn_nash" => from_file("src/strategy/kuhn_nash.json"),

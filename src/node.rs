@@ -1,3 +1,5 @@
+//! Representation of *node*
+
 use super::{action::ActionId, player::Player};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -11,12 +13,10 @@ impl NodeId {
     }
 }
 
-pub type NodeValue = f64;
-
 #[derive(Clone, Deserialize, Serialize)]
 pub enum Node {
     Terminal {
-        value: NodeValue,
+        value: f64,
     },
     NonTerminal {
         player: Player,
@@ -39,7 +39,7 @@ impl Node {
         }
     }
 
-    pub fn value(&self) -> &NodeValue {
+    pub fn value(&self) -> &f64 {
         match self {
             Node::Terminal { value } => value,
             Node::NonTerminal { .. } => panic!("non terminal has no value"),
@@ -71,5 +71,3 @@ impl InformationSetId {
         InformationSetId(i)
     }
 }
-
-pub type InformationPartition = BTreeMap<InformationSetId, InformationSet>;
