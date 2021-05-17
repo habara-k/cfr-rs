@@ -1,7 +1,7 @@
 use super::{
     action::ActionId,
     node::{InformationSetId, Node, NodeId},
-    player::{Player, ProbContribute},
+    player::Player,
     rule::Rule,
     strategy::Strategy,
 };
@@ -44,7 +44,19 @@ fn bfs_ord(rule: &Rule) -> Vec<NodeId> {
 }
 
 pub fn calc_best_resp(rule: &Rule, myself: &Player, strt: &Strategy) -> f64 {
-    let reach_pr = calc_prob_to_reach_terminal_node(rule, &strt);
+    let reach_pr: BTreeMap<NodeId, f64> = calc_prob_to_reach_terminal_node(rule, &strt)
+        .iter()
+        .map(|(node_id, (pr1, pr2, prc))| {
+            (
+                *node_id,
+                match myself {
+                    Player::P1 => pr2 * prc,
+                    Player::P2 => pr1 * prc,
+                    _ => panic!(),
+                },
+            )
+        })
+        .collect();
 
     let best_action_at =
         |utils: &BTreeMap<NodeId, f64>, info_set_id: &InformationSetId| -> &ActionId {
@@ -69,7 +81,7 @@ pub fn calc_best_resp(rule: &Rule, myself: &Player, strt: &Strategy) -> f64 {
     for node_id in ord.iter().rev() {
         match &rule.nodes[node_id] {
             Node::Terminal { value } => {
-                utils.insert(*node_id, *value * reach_pr[node_id].except(myself));
+                utils.insert(*node_id, *value * reach_pr[node_id]);
             }
             Node::NonTerminal { player, edges } => {
                 utils.insert(
@@ -97,44 +109,69 @@ pub fn calc_best_resp(rule: &Rule, myself: &Player, strt: &Strategy) -> f64 {
 fn calc_prob_to_reach_terminal_node(
     rule: &Rule,
     strt: &Strategy,
-) -> BTreeMap<NodeId, ProbContribute> {
-    let mut probs: BTreeMap<NodeId, ProbContribute> = BTreeMap::new();
-    calc_prob_to_reach_terminal_node_inner(
-        &mut probs,
-        rule,
-        strt,
-        &rule.root,
-        ProbContribute::new(),
-    );
+) -> BTreeMap<NodeId, (f64, f64, f64)> {
+    let mut probs: BTreeMap<NodeId, (f64, f64, f64)> = BTreeMap::new();
+    calc_prob_to_reach_terminal_node_inner(&mut probs, rule, strt, &rule.root, 1.0, 1.0, 1.0);
     probs
 }
 
 fn calc_prob_to_reach_terminal_node_inner(
-    probs: &mut BTreeMap<NodeId, ProbContribute>,
+    probs: &mut BTreeMap<NodeId, (f64, f64, f64)>,
     rule: &Rule,
     strt: &Strategy,
     node_id: &NodeId,
-    prob: ProbContribute,
+    pr1: f64,
+    pr2: f64,
+    prc: f64,
 ) {
     match &rule.nodes[node_id] {
         Node::Terminal { .. } => {
-            probs.insert(*node_id, prob);
+            probs.insert(*node_id, (pr1, pr2, prc));
         }
-        Node::NonTerminal { player, edges, .. } => {
-            let dist = match player {
-                Player::C => &rule.transition[node_id],
-                _ => &strt[&rule.info_set_id_by_node[node_id]],
-            };
-            for (action_id, child_id) in edges {
-                calc_prob_to_reach_terminal_node_inner(
-                    probs,
-                    rule,
-                    strt,
-                    child_id,
-                    prob.prod(player, dist[action_id]),
-                )
+        Node::NonTerminal { player, edges, .. } => match player {
+            Player::C => {
+                let dist = &rule.transition[node_id];
+                for (action_id, child_id) in edges {
+                    calc_prob_to_reach_terminal_node_inner(
+                        probs,
+                        rule,
+                        strt,
+                        child_id,
+                        pr1,
+                        pr2,
+                        prc * &dist[action_id],
+                    )
+                }
             }
-        }
+            Player::P1 => {
+                let dist = &strt[&rule.info_set_id_by_node[node_id]];
+                for (action_id, child_id) in edges {
+                    calc_prob_to_reach_terminal_node_inner(
+                        probs,
+                        rule,
+                        strt,
+                        child_id,
+                        pr1 * &dist[action_id],
+                        pr2,
+                        prc,
+                    )
+                }
+            }
+            Player::P2 => {
+                let dist = &strt[&rule.info_set_id_by_node[node_id]];
+                for (action_id, child_id) in edges {
+                    calc_prob_to_reach_terminal_node_inner(
+                        probs,
+                        rule,
+                        strt,
+                        child_id,
+                        pr1,
+                        pr2 * &dist[action_id],
+                        prc,
+                    )
+                }
+            }
+        },
     }
 }
 
