@@ -1,3 +1,18 @@
+//! A rust implementation of Counterfacutual Regret Minimization
+//! # Example
+//! ```
+//! use cfr_rs::*;
+//! let rule = rule::from_name("kuhn");
+//!
+//! let strt = strategy::uniform(&rule);
+//! let before = solver::calc_exploitability(&rule, &strt);
+//!
+//! let step = 1000;
+//! let strt = cfr::calc_nash_strt(&rule, strt, step);
+//! let after = solver::calc_exploitability(&rule, &strt);
+//!
+//! assert!(after < before); // exploitability is decreasing!
+//! ```
 #[macro_use]
 extern crate log;
 

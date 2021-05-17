@@ -40,6 +40,6 @@ fn main() {
         .sum::<f64>()
         .sqrt();
 
-    dbg!(avg);
-    dbg!(std);
+    println!("avg: {:.6}[sec]", avg);
+    println!("std: {:.6}[sec]", std);
 }
