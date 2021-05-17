@@ -38,7 +38,7 @@ The strategy calculated above guarantees that
 - player1 can achieve a score of `-0.055644...` at worst.
 - player2 can achieve a score of `-0.055206...` at worst.
 
-# Doc
+## Doc
 
 ```
 $ cargo doc --open
