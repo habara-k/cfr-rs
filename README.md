@@ -1,5 +1,9 @@
 # CFR-rs
 
+![Build Status](https://github.com/habara-k/cfr-rs/actions/workflows/rust.yml/badge.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+
 CFR-rs is a rust implementation of Counterfactual Regret Minimization[1]. 
 
 The library calculates ε-Nash equilibrium of **all** Imperfect-Information Extensive-Form Game satisfying 
