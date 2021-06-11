@@ -6,7 +6,7 @@ mod tests {
     use cfr_rs::*;
     #[test]
     fn kuhn() {
-        let rule = rule::from_name("kuhn");
+        let rule = rule::from_path("src/rule/kuhn");
 
         let nash_strt = strategy::from_name("kuhn_nash");
         assert_approx_eq!(solver::calc_ev(&rule, &nash_strt), -1.0 / 18.0);
@@ -21,7 +21,7 @@ mod tests {
     }
     #[test]
     fn glico() {
-        let rule = rule::from_name("glico");
+        let rule = rule::from_path("src/rule/glico");
 
         let nash_strt = strategy::from_name("glico_nash");
         assert_approx_eq!(solver::calc_ev(&rule, &nash_strt), 0.0);

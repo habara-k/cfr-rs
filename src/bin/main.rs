@@ -8,7 +8,7 @@ fn main() {
 
     trace!("start: main");
 
-    let rule = rule::from_name(&std::env::args().nth(1).expect("no rule given"));
+    let rule = rule::from_path(&std::env::args().nth(1).expect("no rule given"));
     let step = std::env::args()
         .nth(2)
         .expect("no step given")

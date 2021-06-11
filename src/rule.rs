@@ -225,23 +225,8 @@ pub fn from_json(json: &str) -> Rule {
 /// # Example
 /// ```
 /// use cfr_rs::*;
-/// let rule = rule::from_file("src/rule/kuhn.json"); // Game rule of Kuhn poker
+/// let rule = rule::from_path("src/rule/kuhn.json"); // Game rule of Kuhn poker
 /// ```
-pub fn from_file(path: &str) -> Rule {
+pub fn from_path(path: &str) -> Rule {
     from_json(&fs::read_to_string(path).expect("failed to read file"))
-}
-
-/// Get a `Rule` from its name.
-/// # Example
-/// ```
-/// use cfr_rs::*;
-/// let rule = rule::from_name("leduc"); // Game rule of Leduc Hold'em
-/// ```
-pub fn from_name(rule_name: &str) -> Rule {
-    match rule_name {
-        "kuhn" => from_file("src/rule/kuhn.json"),
-        "leduc" => from_file("src/rule/leduc.json"),
-        "glico" => from_file("src/rule/glico.json"),
-        _ => panic!("invalid rule name"),
-    }
 }
