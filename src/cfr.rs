@@ -14,7 +14,7 @@ use std::collections::BTreeMap;
 /// # Example
 /// ```
 /// use cfr_rs::*;
-/// let rule = rule::from_name("kuhn");
+/// let rule = rule::from_path("src/rule/kuhn.json");
 /// let step = 1000;
 /// let strt = cfr::calc_nash_strt(&rule, strategy::uniform(&rule), step);
 /// ```

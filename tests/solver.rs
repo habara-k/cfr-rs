@@ -6,9 +6,9 @@ mod tests {
     use cfr_rs::*;
     #[test]
     fn kuhn() {
-        let rule = rule::from_path("src/rule/kuhn");
+        let rule = rule::from_path("src/rule/kuhn.json");
 
-        let nash_strt = strategy::from_name("kuhn_nash");
+        let nash_strt = strategy::from_path("src/strategy/kuhn_nash.json");
         assert_approx_eq!(solver::calc_ev(&rule, &nash_strt), -1.0 / 18.0);
         assert_approx_eq!(solver::calc_exploitability(&rule, &nash_strt), 0.0);
 
@@ -21,9 +21,9 @@ mod tests {
     }
     #[test]
     fn glico() {
-        let rule = rule::from_path("src/rule/glico");
+        let rule = rule::from_path("src/rule/glico.json");
 
-        let nash_strt = strategy::from_name("glico_nash");
+        let nash_strt = strategy::from_path("src/strategy/glico_nash.json");
         assert_approx_eq!(solver::calc_ev(&rule, &nash_strt), 0.0);
         assert_approx_eq!(solver::calc_exploitability(&rule, &nash_strt), 0.0);
 

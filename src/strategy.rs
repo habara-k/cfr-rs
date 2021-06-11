@@ -64,22 +64,8 @@ pub fn from_json(json: &str) -> Strategy {
 /// # Example
 /// ```
 /// use cfr_rs::*;
-/// let strt = strategy::from_file("src/strategy/kuhn_nash.json"); // A nash strategy of Kuhn poker
+/// let strt = strategy::from_path("src/strategy/kuhn_nash.json"); // A nash strategy of Kuhn poker
 /// ```
-pub fn from_file(path: &str) -> Strategy {
+pub fn from_path(path: &str) -> Strategy {
     from_json(&fs::read_to_string(path).expect("failed to read file"))
-}
-
-/// Get a `Strategy` from its name.
-/// # Example
-/// ```
-/// use cfr_rs::*;
-/// let strt = strategy::from_name("kuhn_nash"); // A nash strategy of Kuhn poker
-/// ```
-pub fn from_name(strt_name: &str) -> Strategy {
-    match strt_name {
-        "kuhn_nash" => from_file("src/strategy/kuhn_nash.json"),
-        "glico_nash" => from_file("src/strategy/glico_nash.json"),
-        _ => panic!("invalid strategy name"),
-    }
 }

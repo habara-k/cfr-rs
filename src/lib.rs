@@ -2,7 +2,7 @@
 //! # Example
 //! ```
 //! use cfr_rs::*;
-//! let rule = rule::from_name("kuhn");
+//! let rule = rule::from_path("src/rule/kuhn.json");
 //!
 //! let strt = strategy::uniform(&rule);
 //! let before = solver::calc_exploitability(&rule, &strt);

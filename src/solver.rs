@@ -16,8 +16,8 @@ use std::collections::{BTreeMap, VecDeque};
 /// use cfr_rs::*;
 /// use approx_eq::assert_approx_eq;
 ///
-/// let rule = rule::from_name("kuhn");
-/// let strt = strategy::from_name("kuhn_nash");
+/// let rule = rule::from_path("src/rule/kuhn.json");
+/// let strt = strategy::from_path("src/strategy/kuhn_nash.json");
 /// assert_approx_eq!(solver::calc_ev(&rule, &strt), -1.0 / 18.0); // The optimal expected value is `-1/18`
 /// ```
 pub fn calc_ev(rule: &Rule, strt: &Strategy) -> f64 {
@@ -61,8 +61,8 @@ fn bfs_ord(rule: &Rule) -> Vec<NodeId> {
 /// use cfr_rs::*;
 /// use approx_eq::assert_approx_eq;
 ///
-/// let rule = rule::from_name("kuhn");
-/// let strt = strategy::from_name("kuhn_nash");
+/// let rule = rule::from_path("src/rule/kuhn.json");
+/// let strt = strategy::from_path("src/strategy/kuhn_nash.json");
 /// assert_approx_eq!(solver::calc_best_resp(&rule, &player::Player::P1, &strt), -1.0 / 18.0); // The expected value cannot changes.
 /// assert_approx_eq!(solver::calc_best_resp(&rule, &player::Player::P2, &strt), -1.0 / 18.0); // The expected value cannot changes.
 ///
@@ -208,8 +208,8 @@ fn calc_prob_to_reach_terminal_node_inner(
 /// use cfr_rs::*;
 /// use approx_eq::assert_approx_eq;
 ///
-/// let rule = rule::from_name("kuhn");
-/// let strt = strategy::from_name("kuhn_nash");
+/// let rule = rule::from_path("src/rule/kuhn.json");
+/// let strt = strategy::from_path("src/strategy/kuhn_nash.json");
 /// assert_approx_eq!(solver::calc_exploitability(&rule, &strt), 0.0); // The nash strategy has zero exploitability.
 ///
 /// let strt = strategy::uniform(&rule);
