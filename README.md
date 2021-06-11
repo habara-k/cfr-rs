@@ -13,12 +13,12 @@ The library calculates ε-Nash equilibrium of **all** Imperfect-Information Exte
 
 You can calculate an ε-Nash equilibrium strategy for [Kuhn poker](https://en.wikipedia.org/wiki/Kuhn_poker) in `1,000,000` steps.
 ```
-$ cargo run --release --bin main kuhn 1000000
+$ cargo run --release --bin main src/rule/kuhn.json 1000000
 ```
 
-You can also calculate an ε-Nash equilibrium strategy for [Glico(Weighted Rock Paper Scissors)](https://ja.wikipedia.org/wiki/%E3%82%B0%E3%83%AA%E3%82%B3_(%E9%81%8A%E3%81%B3)) :)
+You can also calculate an ε-Nash equilibrium strategy for [Glico](https://ja.wikipedia.org/wiki/%E3%82%B0%E3%83%AA%E3%82%B3_(%E9%81%8A%E3%81%B3))(Weighted Rock Paper Scissors)
 ```
-$ cargo run --release --bin main glico 1000000
+$ cargo run --release --bin main src/rule/glico.json 1000000
 ```
 
 ## Bench
