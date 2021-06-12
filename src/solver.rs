@@ -218,3 +218,23 @@ fn calc_prob_to_reach_terminal_node_inner(
 pub fn calc_exploitability(rule: &Rule, strt: &Strategy) -> f64 {
     calc_best_resp(rule, &Player::P1, strt) - calc_best_resp(rule, &Player::P2, strt)
 }
+
+/// Calculate improvement
+/// # Example
+/// ```
+/// use cfr_rs::*;
+/// use approx_eq::assert_approx_eq;
+///
+/// let rule = rule::from_path("src/rule/kuhn.json");
+/// let strt = strategy::from_path("src/strategy/kuhn_nash.json");
+/// assert_approx_eq!(solver::calc_max_improvement(&rule, &strt), 0.0); // The nash strategy has zero exploitability.
+///
+/// let strt = strategy::uniform(&rule);
+/// assert!(solver::calc_max_improvement(&rule, &strt) >= 0.0); // The exploitability cannot be negative.
+/// ``` 
+pub fn calc_max_improvement(rule: &Rule, strt: &Strategy) -> f64 {
+    let p1_best_resp = calc_best_resp(rule, &Player::P1, strt);
+    let p2_best_resp = calc_best_resp(rule, &Player::P2, strt);
+    let ev = calc_ev(rule, strt);
+    *[p1_best_resp - ev, ev - p2_best_resp].iter().ord_subset_max().unwrap()
+}
