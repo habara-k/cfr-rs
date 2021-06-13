@@ -43,7 +43,7 @@ The ε value of ε-Nash equilibrium decreases in `O(1/√step)`.
 ## Doc
 
 ```
-$ cargo doc --open
+$ cargo doc --no-deps --open
 ```
 
 ## Licence
