@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["calc_best_resp","Calculate the optimal value of the expected value when `myself` is free to change the strategy."],["calc_ev","Calculate the expected value."],["calc_min_epsilon","Calculate minimum value of ε such that the given strategy is ε-Nash equilibrium"]]});

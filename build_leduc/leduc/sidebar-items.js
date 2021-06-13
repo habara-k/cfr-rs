@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["observation",""],["possible_actions",""],["rule","Get `Rule` of Leduc Hold’em"],["terminal_val",""],["transition",""],["winner",""]],"struct":[["Leduc",""],["State",""]]});

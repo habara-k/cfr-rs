@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["calc_nash_strt","Calculate an ε-Nash strategy"]]});
