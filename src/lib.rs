@@ -4,14 +4,9 @@
 //! use cfr_rs::*;
 //! let rule = rule::from_path("src/rule/kuhn.json");
 //!
-//! let strt = strategy::uniform(&rule);
-//! let before = solver::calc_exploitability(&rule, &strt);
-//!
+//! let init_strt = strategy::uniform(&rule);
 //! let step = 1000;
-//! let strt = cfr::calc_nash_strt(&rule, strt, step);
-//! let after = solver::calc_exploitability(&rule, &strt);
-//!
-//! assert!(after < before); // exploitability is decreasing!
+//! let strt = cfr::calc_nash_strt(&rule, init_strt, step);
 //! ```
 #[macro_use]
 extern crate log;

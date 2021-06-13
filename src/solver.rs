@@ -202,7 +202,7 @@ fn calc_prob_to_reach_terminal_node_inner(
     }
 }
 
-/// Calculate *exploitability*
+/// Calculate minimum value of ε such that the given strategy is ε-Nash equilibrium
 /// # Example
 /// ```
 /// use cfr_rs::*;
@@ -210,34 +210,11 @@ fn calc_prob_to_reach_terminal_node_inner(
 ///
 /// let rule = rule::from_path("src/rule/kuhn.json");
 /// let strt = strategy::from_path("src/strategy/kuhn_nash.json");
-/// assert_approx_eq!(solver::calc_exploitability(&rule, &strt), 0.0); // The nash strategy has zero exploitability.
-///
-/// let strt = strategy::uniform(&rule);
-/// assert!(solver::calc_exploitability(&rule, &strt) >= 0.0); // The exploitability cannot be negative.
+/// assert_approx_eq!(solver::calc_min_epsilon(&rule, &strt), 0.0); // The nash equilibrium strategy is (ε=0)-Nash equilibrium.
 /// ```
-pub fn calc_exploitability(rule: &Rule, strt: &Strategy) -> f64 {
-    calc_best_resp(rule, &Player::P1, strt) - calc_best_resp(rule, &Player::P2, strt)
-}
-
-/// Calculate improvement
-/// # Example
-/// ```
-/// use cfr_rs::*;
-/// use approx_eq::assert_approx_eq;
-///
-/// let rule = rule::from_path("src/rule/kuhn.json");
-/// let strt = strategy::from_path("src/strategy/kuhn_nash.json");
-/// assert_approx_eq!(solver::calc_max_improvement(&rule, &strt), 0.0); // The nash strategy has zero exploitability.
-///
-/// let strt = strategy::uniform(&rule);
-/// assert!(solver::calc_max_improvement(&rule, &strt) >= 0.0); // The exploitability cannot be negative.
-/// ```
-pub fn calc_max_improvement(rule: &Rule, strt: &Strategy) -> f64 {
-    let p1_best_resp = calc_best_resp(rule, &Player::P1, strt);
-    let p2_best_resp = calc_best_resp(rule, &Player::P2, strt);
+pub fn calc_min_epsilon(rule: &Rule, strt: &Strategy) -> f64 {
     let ev = calc_ev(rule, strt);
-    *[p1_best_resp - ev, ev - p2_best_resp]
-        .iter()
-        .ord_subset_max()
-        .unwrap()
+    let p1_improve = calc_best_resp(rule, &Player::P1, strt) - ev;
+    let p2_improve = ev - calc_best_resp(rule, &Player::P2, strt);
+    if p1_improve > p2_improve { p1_improve } else { p2_improve }
 }

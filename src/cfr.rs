@@ -25,7 +25,7 @@ pub fn calc_nash_strt(rule: &Rule, init_strt: Strategy, step: usize) -> Strategy
     let mut strt_sum = strategy::new(rule);
 
     let split = 100;
-    let mut improvements: BTreeMap<usize, f64> = BTreeMap::new();
+    let mut epsilon: BTreeMap<usize, f64> = BTreeMap::new();
 
     for t in (1..step + 1).progress() {
         cfr_dfs(
@@ -42,9 +42,9 @@ pub fn calc_nash_strt(rule: &Rule, init_strt: Strategy, step: usize) -> Strategy
         if ((t as f64).log2() * split as f64 / (step as f64).log2()) as i32
             != (((t - 1) as f64).log2() * split as f64 / (step as f64).log2()) as i32
         {
-            improvements.insert(
+            epsilon.insert(
                 t,
-                solver::calc_max_improvement(
+                solver::calc_min_epsilon(
                     &rule,
                     &strt_sum
                         .iter()
@@ -58,8 +58,8 @@ pub fn calc_nash_strt(rule: &Rule, init_strt: Strategy, step: usize) -> Strategy
     }
 
     debug!(
-        "improvements: {}",
-        serde_json::to_string(&improvements).unwrap()
+        "epsilon: {}",
+        serde_json::to_string(&epsilon).unwrap()
     );
 
     strt_sum
