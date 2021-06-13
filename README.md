@@ -36,6 +36,9 @@ $ cargo run --release --bin main src/rule/glico.json 1000000
 The library calculates a strategy in `17.3 ± 0.1` sec.
 
 The ε value of ε-Nash equilibrium decreases in `O(1/√step)`.
+<p align="center">
+<img src="https://user-images.githubusercontent.com/34413567/121806896-b9d27f80-cc8c-11eb-876d-7b71f99aef62.png" width="600">
+</p>
 
 ## Doc
 
