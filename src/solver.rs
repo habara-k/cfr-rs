@@ -231,10 +231,13 @@ pub fn calc_exploitability(rule: &Rule, strt: &Strategy) -> f64 {
 ///
 /// let strt = strategy::uniform(&rule);
 /// assert!(solver::calc_max_improvement(&rule, &strt) >= 0.0); // The exploitability cannot be negative.
-/// ``` 
+/// ```
 pub fn calc_max_improvement(rule: &Rule, strt: &Strategy) -> f64 {
     let p1_best_resp = calc_best_resp(rule, &Player::P1, strt);
     let p2_best_resp = calc_best_resp(rule, &Player::P2, strt);
     let ev = calc_ev(rule, strt);
-    *[p1_best_resp - ev, ev - p2_best_resp].iter().ord_subset_max().unwrap()
+    *[p1_best_resp - ev, ev - p2_best_resp]
+        .iter()
+        .ord_subset_max()
+        .unwrap()
 }

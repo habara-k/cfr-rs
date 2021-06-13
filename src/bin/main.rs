@@ -8,18 +8,22 @@ extern crate log4rs;
 fn init_logger() {
     use log::LevelFilter;
     use log4rs::append::file::FileAppender;
-    use log4rs::encode::pattern::PatternEncoder;
     use log4rs::config::{Appender, Config, Root};
+    use log4rs::encode::pattern::PatternEncoder;
 
     let logfile = FileAppender::builder()
         .encoder(Box::new(PatternEncoder::new("{d} {l} {t} - {m}{n}")))
-        .build("log/output.log").unwrap();
+        .build("log/output.log")
+        .unwrap();
 
     let config = Config::builder()
         .appender(Appender::builder().build("logfile", Box::new(logfile)))
-        .build(Root::builder()
-                   .appender("logfile")
-                   .build(LevelFilter::Debug)).unwrap();
+        .build(
+            Root::builder()
+                .appender("logfile")
+                .build(LevelFilter::Debug),
+        )
+        .unwrap();
 
     log4rs::init_config(config).unwrap();
 }
@@ -39,7 +43,10 @@ fn main() {
 
     let start = Instant::now();
     let strt = cfr::calc_nash_strt(&rule, uniform_strt, step);
-    info!("elapsed time: {} [sec]", start.elapsed().as_nanos() as f64 / 1_000_000_000 as f64);
+    info!(
+        "elapsed time: {} [sec]",
+        start.elapsed().as_nanos() as f64 / 1_000_000_000 as f64
+    );
 
     info!("calculated strategy: {:#?}", &strt);
 
