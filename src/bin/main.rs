@@ -1,4 +1,5 @@
-use cfr_rs::{player::Player, *};
+use cfr_rs::*;
+use std::time::Instant;
 
 #[macro_use]
 extern crate log;
@@ -36,7 +37,9 @@ fn main() {
         .expect("step must be usize");
     let uniform_strt = strategy::uniform(&rule);
 
+    let start = Instant::now();
     let strt = cfr::calc_nash_strt(&rule, uniform_strt, step);
+    info!("elapsed time: {} [sec]", start.elapsed().as_nanos() as f64 / 1_000_000_000 as f64);
 
     info!("calculated strategy: {:#?}", &strt);
 
@@ -44,11 +47,11 @@ fn main() {
 
     info!(
         "P1 can achieve at worst: {:.8}",
-        solver::calc_best_resp(&rule, &Player::P2, &strt)
+        solver::calc_best_resp(&rule, &player::Player::P2, &strt)
     );
     info!(
         "P2 can achieve at worst: {:.8}",
-        solver::calc_best_resp(&rule, &Player::P1, &strt)
+        solver::calc_best_resp(&rule, &player::Player::P1, &strt)
     );
 
     trace!("finish: main");

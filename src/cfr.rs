@@ -26,7 +26,6 @@ pub fn calc_nash_strt(rule: &Rule, init_strt: Strategy, step: usize) -> Strategy
 
     let split = 100;
     let mut improvements: BTreeMap<usize, f64> = BTreeMap::new();
-    improvements.insert(0, solver::calc_max_improvement(&rule, &latest_strt));
 
     for t in (1..step + 1).progress() {
         cfr_dfs(

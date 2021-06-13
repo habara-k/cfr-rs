@@ -8,7 +8,6 @@ args = parser.parse_args()
 
 data = json.loads(args.log)
 split = len(data)
-print(split)
 step = 10000
 
 plt.plot(
@@ -16,5 +15,7 @@ plt.plot(
     data.values())
 plt.xscale('log')
 plt.yscale('log')
+plt.xlabel('step')
+plt.ylabel('ε')
 plt.grid()
 plt.show()

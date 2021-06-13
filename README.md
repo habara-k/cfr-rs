@@ -35,12 +35,7 @@ $ cargo run --release --bin main src/rule/glico.json 1000000
 
 The library calculates a strategy in `17.3 ± 0.1` sec.
 
-The game value (the score that both players can achieve no matter what strategy the other player uses) of Kuhn poker is `-1/18 = -0.055555...`.
-
-The strategy calculated above guarantees that
-
-- player1 can achieve a score of `-0.055644...` at worst.
-- player2 can achieve a score of `-0.055206...` at worst.
+The ε value of ε-Nash equilibrium decreases in `O(1/√step)`.
 
 ## Doc
 
