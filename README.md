@@ -20,15 +20,14 @@ You can calculate an ε-Nash equilibrium strategy for [Kuhn poker](https://en.wi
 $ cargo run --release --bin main src/rule/kuhn.json 1000000
 ```
 
-You can also calculate an ε-Nash equilibrium strategy for [Glico](https://ja.wikipedia.org/wiki/%E3%82%B0%E3%83%AA%E3%82%B3_(%E9%81%8A%E3%81%B3))(Weighted Rock Paper Scissors)
-```
-$ cargo run --release --bin main src/rule/glico.json 1000000
-```
+This library reads all the rules of a game from a JSON file. 
+The implementation is not specific to any particular game, so it can analyze any game that meets the above conditions.
 
-## Bench
+
+## Benchmark
 
 - Rule: [Kuhn poker](https://en.wikipedia.org/wiki/Kuhn_poker), an extremely simplified form of poker.
-- step: `1,000,000`
+- Step: `1,000,000`
 - Environments:
   - 3.2 GHz CPU
   - 8 GB RAM
@@ -40,11 +39,9 @@ The ε value of ε-Nash equilibrium decreases in `O(1/√step)`.
 <img src="https://user-images.githubusercontent.com/34413567/121806896-b9d27f80-cc8c-11eb-876d-7b71f99aef62.png" width="600">
 </p>
 
-## Doc
+## Documents
 
-```
-$ cargo doc --no-deps --open
-```
+[doc](https://habara-k.github.io/cfr-rs/cfr_rs/)
 
 ## Licence
 
