@@ -1,10 +1,35 @@
-use cfr_rs::{player::Player, *};
+use cfr_rs::*;
+use std::time::Instant;
 
 #[macro_use]
 extern crate log;
+extern crate log4rs;
+
+fn init_logger() {
+    use log::LevelFilter;
+    use log4rs::append::file::FileAppender;
+    use log4rs::config::{Appender, Config, Root};
+    use log4rs::encode::pattern::PatternEncoder;
+
+    let logfile = FileAppender::builder()
+        .encoder(Box::new(PatternEncoder::new("{d} {l} {t} - {m}{n}")))
+        .build("log/output.log")
+        .unwrap();
+
+    let config = Config::builder()
+        .appender(Appender::builder().build("logfile", Box::new(logfile)))
+        .build(
+            Root::builder()
+                .appender("logfile")
+                .build(LevelFilter::Debug),
+        )
+        .unwrap();
+
+    log4rs::init_config(config).unwrap();
+}
 
 fn main() {
-    env_logger::init();
+    init_logger();
 
     trace!("start: main");
 
@@ -16,30 +41,24 @@ fn main() {
         .expect("step must be usize");
     let uniform_strt = strategy::uniform(&rule);
 
-    info!(
-        "exploitability of uniform strategy: {}",
-        solver::calc_exploitability(&rule, &uniform_strt)
-    );
-
+    let start = Instant::now();
     let strt = cfr::calc_nash_strt(&rule, uniform_strt, step);
-
-    println!("calculated strategy:");
-    visualizer::print_strt(&rule, &strt);
-
-    println!("expected value: {:.8}", solver::calc_ev(&rule, &strt));
-
-    println!(
-        "P1 can achieve at worst: {:.8}",
-        solver::calc_best_resp(&rule, &Player::P2, &strt)
+    info!(
+        "elapsed time: {} [sec]",
+        start.elapsed().as_nanos() as f64 / 1_000_000_000 as f64
     );
-    println!(
-        "P2 can achieve at worst: {:.8}",
-        solver::calc_best_resp(&rule, &Player::P1, &strt)
-    );
+
+    info!("calculated strategy: {:#?}", &strt);
+
+    info!("expected value: {:.8}", solver::calc_ev(&rule, &strt));
 
     info!(
-        "exploitability: {}",
-        solver::calc_exploitability(&rule, &strt)
+        "P1 can achieve at worst: {:.8}",
+        solver::calc_best_resp(&rule, &player::Player::P2, &strt)
+    );
+    info!(
+        "P2 can achieve at worst: {:.8}",
+        solver::calc_best_resp(&rule, &player::Player::P1, &strt)
     );
 
     trace!("finish: main");

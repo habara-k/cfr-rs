@@ -13,4 +13,4 @@ ord_subset = "3"
 approx_eq = "0.1"
 indicatif = {version = "*", features = ["rayon"]}
 log = "0.4.0"
-env_logger = "0.8.3"
+log4rs = "1.0.0"

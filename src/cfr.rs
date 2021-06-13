@@ -5,6 +5,7 @@ use super::{
     node::{InformationSetId, Node, NodeId},
     player::Player,
     rule::Rule,
+    solver,
     strategy::{self, Strategy},
 };
 use indicatif::ProgressIterator;
@@ -23,7 +24,10 @@ pub fn calc_nash_strt(rule: &Rule, init_strt: Strategy, step: usize) -> Strategy
     let mut latest_strt = init_strt;
     let mut strt_sum = strategy::new(rule);
 
-    for _ in (1..step + 1).progress() {
+    let split = 100;
+    let mut improvements: BTreeMap<usize, f64> = BTreeMap::new();
+
+    for t in (1..step + 1).progress() {
         cfr_dfs(
             rule,
             &mut regret_sum,
@@ -35,8 +39,28 @@ pub fn calc_nash_strt(rule: &Rule, init_strt: Strategy, step: usize) -> Strategy
             1.0,
         );
 
+        if ((t as f64).log2() * split as f64 / (step as f64).log2()) as i32
+            != (((t - 1) as f64).log2() * split as f64 / (step as f64).log2()) as i32
+        {
+            improvements.insert(
+                t,
+                solver::calc_max_improvement(
+                    &rule,
+                    &strt_sum
+                        .iter()
+                        .map(|(info_set_id, dist)| (*info_set_id, normalized(dist.clone())))
+                        .collect(),
+                ),
+            );
+        }
+
         latest_strt = to_strategy(&regret_sum);
     }
+
+    debug!(
+        "improvements: {}",
+        serde_json::to_string(&improvements).unwrap()
+    );
 
     strt_sum
         .into_iter()
