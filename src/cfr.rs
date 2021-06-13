@@ -57,10 +57,7 @@ pub fn calc_nash_strt(rule: &Rule, init_strt: Strategy, step: usize) -> Strategy
         latest_strt = to_strategy(&regret_sum);
     }
 
-    debug!(
-        "epsilon: {}",
-        serde_json::to_string(&epsilon).unwrap()
-    );
+    debug!("epsilon: {}", serde_json::to_string(&epsilon).unwrap());
 
     strt_sum
         .into_iter()

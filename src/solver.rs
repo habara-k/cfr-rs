@@ -216,5 +216,9 @@ pub fn calc_min_epsilon(rule: &Rule, strt: &Strategy) -> f64 {
     let ev = calc_ev(rule, strt);
     let p1_improve = calc_best_resp(rule, &Player::P1, strt) - ev;
     let p2_improve = ev - calc_best_resp(rule, &Player::P2, strt);
-    if p1_improve > p2_improve { p1_improve } else { p2_improve }
+    if p1_improve > p2_improve {
+        p1_improve
+    } else {
+        p2_improve
+    }
 }
