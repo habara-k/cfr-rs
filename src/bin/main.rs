@@ -48,7 +48,7 @@ fn main() {
         start.elapsed().as_nanos() as f64 / 1_000_000_000 as f64
     );
 
-    info!("calculated strategy: {:#?}", &strt);
+    info!("calculated strategy: {}", strategy::to_string(&strt, &rule));
 
     info!("expected value: {:.8}", solver::calc_ev(&rule, &strt));
 

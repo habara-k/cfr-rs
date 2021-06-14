@@ -15,6 +15,7 @@ pub struct Rule {
     pub nodes: BTreeMap<NodeId, Node>,
     pub root: NodeId,
     pub info_partition: BTreeMap<InformationSetId, InformationSet>,
+    pub info_set_details: BTreeMap<InformationSetId, String>,
     pub transition: BTreeMap<NodeId, BTreeMap<ActionId, f64>>,
 
     #[serde(skip_deserializing, skip_serializing)]
@@ -23,8 +24,6 @@ pub struct Rule {
     pub actions_by_info_set: BTreeMap<InformationSetId, Vec<ActionId>>,
     #[serde(skip_deserializing, skip_serializing)]
     pub player_by_info_set: BTreeMap<InformationSetId, Player>,
-    #[serde(skip_deserializing, skip_serializing)]
-    pub history: BTreeMap<NodeId, Vec<ActionId>>,
 }
 
 impl Rule {
@@ -33,7 +32,6 @@ impl Rule {
         self.build_info_set_id_by_node();
         self.build_actions_by_info_set();
         self.build_player_by_info_set();
-        self.build_history();
     }
 
     /// Calculate the mapping from a node id to its information set id.
@@ -80,32 +78,6 @@ impl Rule {
             }
         }
         trace!("finish: build_player_by_info_set");
-    }
-
-    /// From the node id, calculate the history of the actions that led up to it.
-    fn build_history(&mut self) {
-        trace!("start: build_history");
-        let mut actions: Vec<ActionId> = Vec::new();
-        let mut history: BTreeMap<NodeId, Vec<ActionId>> = BTreeMap::new();
-        self.build_history_inner(&self.root, &mut actions, &mut history);
-        self.history = history;
-        trace!("finish: build_history");
-    }
-
-    fn build_history_inner(
-        &self,
-        node_id: &NodeId,
-        actions: &mut Vec<ActionId>,
-        history: &mut BTreeMap<NodeId, Vec<ActionId>>,
-    ) {
-        history.insert(*node_id, actions.clone());
-        if let Node::NonTerminal { edges, .. } = &self.nodes[node_id] {
-            for (action_id, child_id) in edges.iter() {
-                actions.push(*action_id);
-                self.build_history_inner(child_id, actions, history);
-                actions.pop();
-            }
-        }
     }
 }
 
@@ -210,6 +182,20 @@ impl Rule {
 ///   "info_partition": {
 ///     "0": [0],
 ///     "1": [1,2,3]
+///   },
+///   "info_set_details": {
+///     "0": "P1: J",
+///     "1": "P1: Q",
+///     "2": "P1: K",
+///     "9": "P1: J, P1-Check, P2-Bet",
+///     "10": "P1: Q, P1-Check, P2-Bet",
+///     "11": "P1: K, P1-Check, P2-Bet",
+///     "3": "P2: Q, P1-Check",
+///     "4": "P2: Q, P1-Bet",
+///     "5": "P2: K, P1-Check",
+///     "6": "P2: J, P1-Bet",
+///     "7": "P2: Q, P1-Check",
+///     "8": "P2: K, P1-Bet"
 ///   },
 ///   "transition": {
 ///   }

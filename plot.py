@@ -7,8 +7,6 @@ parser.add_argument('--log')
 args = parser.parse_args()
 
 data = json.loads(args.log)
-split = len(data)
-step = 10000
 
 plt.plot(
     list(map(int, data.keys())),

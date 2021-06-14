@@ -37,7 +37,7 @@ mod leduc {
         rule.root = NodeId::new(0);
         rule.info_partition = leduc.info_partition;
         rule.transition = leduc.transition;
-        rule.build();
+        rule.info_set_details = leduc.info_set_details;
         rule
     }
 
@@ -51,6 +51,7 @@ mod leduc {
         observations: BTreeMap<Vec<&'static str>, usize>,
         info_partition: BTreeMap<InformationSetId, InformationSet>,
         info_set_id: usize,
+        info_set_details: BTreeMap<InformationSetId, String>,
     }
 
     #[derive(Clone, Default, Debug)]
@@ -58,8 +59,8 @@ mod leduc {
         history: Vec<&'static str>,
         bet: BTreeMap<Player, i32>,
         pot: i32,
-        card: BTreeMap<Player, char>,
-        hole_card: Option<char>,
+        hole_card: BTreeMap<Player, char>,
+        flop_card: Option<char>,
         last_player: Option<Player>,
         node_id: NodeId,
     }
@@ -77,8 +78,10 @@ mod leduc {
                 que.pop_front();
 
                 if let Some(val) = terminal_val(&s) {
+                    // terminal node
                     self.nodes.insert(s.node_id, Node::Terminal { value: val });
                 } else if let Some(trans) = transition(&s) {
+                    // chance node
                     let mut edges: BTreeMap<ActionId, NodeId> = BTreeMap::new();
                     let mut dist: BTreeMap<ActionId, f64> = BTreeMap::new();
                     for (action, prob) in trans {
@@ -92,13 +95,13 @@ mod leduc {
 
                         if action.starts_with("Deal") {
                             next_state
-                                .card
+                                .hole_card
                                 .insert(Player::P1, action.chars().nth(4).unwrap());
                             next_state
-                                .card
+                                .hole_card
                                 .insert(Player::P2, action.chars().nth(5).unwrap());
                         } else if action.starts_with("Flop") {
-                            next_state.hole_card = action.chars().nth(4);
+                            next_state.flop_card = action.chars().nth(4);
                         }
                         next_state.last_player = Some(Player::C);
 
@@ -117,6 +120,7 @@ mod leduc {
                     );
                     self.transition.insert(s.node_id, dist);
                 } else if let Some((player, possible_actions)) = possible_actions(&s) {
+                    // playable node
                     let obs = observation(&s, player);
                     if self.observations.contains_key(&obs) {
                         let info_set_id = InformationSetId::new(self.observations[&obs]);
@@ -126,9 +130,11 @@ mod leduc {
                             .push(s.node_id);
                     } else {
                         let info_set_id = InformationSetId::new(self.info_set_id);
+                        self.info_partition.insert(info_set_id, vec![s.node_id]);
+                        self.info_set_details
+                            .insert(info_set_id, detail(&obs, &player));
                         self.observations.insert(obs, self.info_set_id);
                         self.info_set_id += 1;
-                        self.info_partition.insert(info_set_id, vec![s.node_id]);
                     }
 
                     let mut edges: BTreeMap<ActionId, NodeId> = BTreeMap::new();
@@ -201,6 +207,22 @@ mod leduc {
             .collect()
     }
 
+    fn detail(observation: &Vec<&'static str>, myself: &Player) -> String {
+        let mut detail = String::from(match myself {
+            Player::P1 => "P1:",
+            Player::P2 => "P2:",
+            _ => panic!(),
+        });
+        for &action in observation {
+            if action.starts_with("Deal") {
+                detail += &format!(" {}", action.chars().nth(4).unwrap());
+            } else {
+                detail += &format!(" {}", action);
+            }
+        }
+        detail
+    }
+
     fn transition(s: &State) -> Option<Vec<(&'static str, f64)>> {
         let n = s.history.len();
         if n == 0 {
@@ -227,69 +249,47 @@ mod leduc {
         if s.history[n - 1] == "Call"
             || (n >= 2 && s.history[n - 1] == "Check" && s.history[n - 2] == "Check")
         {
-            return Some(match s.history[0] {
-                "DealJQ" => [
-                    ("FlopJ", 1.0 / 4.0),
-                    ("FlopQ", 1.0 / 4.0),
-                    ("FlopK", 1.0 / 2.0),
-                ]
+            return Some(
+                match s.history[0] {
+                    "DealJQ" => vec![
+                        ("FlopJ", 1.0 / 4.0),
+                        ("FlopQ", 1.0 / 4.0),
+                        ("FlopK", 1.0 / 2.0),
+                    ],
+                    "DealJK" => vec![
+                        ("FlopJ", 1.0 / 4.0),
+                        ("FlopQ", 1.0 / 2.0),
+                        ("FlopK", 1.0 / 4.0),
+                    ],
+                    "DealQJ" => vec![
+                        ("FlopJ", 1.0 / 4.0),
+                        ("FlopQ", 1.0 / 4.0),
+                        ("FlopK", 1.0 / 2.0),
+                    ],
+                    "DealQK" => vec![
+                        ("FlopJ", 1.0 / 2.0),
+                        ("FlopQ", 1.0 / 4.0),
+                        ("FlopK", 1.0 / 4.0),
+                    ],
+                    "DealKJ" => vec![
+                        ("FlopJ", 1.0 / 4.0),
+                        ("FlopQ", 1.0 / 2.0),
+                        ("FlopK", 1.0 / 4.0),
+                    ],
+                    "DealKQ" => vec![
+                        ("FlopJ", 1.0 / 2.0),
+                        ("FlopQ", 1.0 / 4.0),
+                        ("FlopK", 1.0 / 4.0),
+                    ],
+                    "DealJJ" => vec![("FlopQ", 1.0 / 2.0), ("FlopK", 1.0 / 2.0)],
+                    "DealQQ" => vec![("FlopJ", 1.0 / 2.0), ("FlopK", 1.0 / 2.0)],
+                    "DealKK" => vec![("FlopJ", 1.0 / 2.0), ("FlopQ", 1.0 / 2.0)],
+                    _ => panic!(),
+                }
                 .iter()
                 .cloned()
                 .collect(),
-                "DealJK" => [
-                    ("FlopJ", 1.0 / 4.0),
-                    ("FlopQ", 1.0 / 2.0),
-                    ("FlopK", 1.0 / 4.0),
-                ]
-                .iter()
-                .cloned()
-                .collect(),
-                "DealQJ" => [
-                    ("FlopJ", 1.0 / 4.0),
-                    ("FlopQ", 1.0 / 4.0),
-                    ("FlopK", 1.0 / 2.0),
-                ]
-                .iter()
-                .cloned()
-                .collect(),
-                "DealQK" => [
-                    ("FlopJ", 1.0 / 2.0),
-                    ("FlopQ", 1.0 / 4.0),
-                    ("FlopK", 1.0 / 4.0),
-                ]
-                .iter()
-                .cloned()
-                .collect(),
-                "DealKJ" => [
-                    ("FlopJ", 1.0 / 4.0),
-                    ("FlopQ", 1.0 / 2.0),
-                    ("FlopK", 1.0 / 4.0),
-                ]
-                .iter()
-                .cloned()
-                .collect(),
-                "DealKQ" => [
-                    ("FlopJ", 1.0 / 2.0),
-                    ("FlopQ", 1.0 / 4.0),
-                    ("FlopK", 1.0 / 4.0),
-                ]
-                .iter()
-                .cloned()
-                .collect(),
-                "DealJJ" => [("FlopQ", 1.0 / 2.0), ("FlopK", 1.0 / 2.0)]
-                    .iter()
-                    .cloned()
-                    .collect(),
-                "DealQQ" => [("FlopJ", 1.0 / 2.0), ("FlopK", 1.0 / 2.0)]
-                    .iter()
-                    .cloned()
-                    .collect(),
-                "DealKK" => [("FlopJ", 1.0 / 2.0), ("FlopQ", 1.0 / 2.0)]
-                    .iter()
-                    .cloned()
-                    .collect(),
-                _ => panic!(),
-            });
+            );
         }
         return None;
     }
@@ -310,9 +310,9 @@ mod leduc {
                 || s.history[n - 1] == "Call"
             {
                 let winner = winner(
-                    s.card[&Player::P1],
-                    s.card[&Player::P2],
-                    s.hole_card.unwrap(),
+                    s.hole_card[&Player::P1],
+                    s.hole_card[&Player::P2],
+                    s.flop_card.unwrap(),
                 );
                 if let Some(winner) = winner {
                     return Some(winner.sign() * (s.bet[&winner] + (s.pot >> 1)) as f64);
@@ -325,12 +325,12 @@ mod leduc {
         return None;
     }
 
-    fn winner(p1_card: char, p2_card: char, hole_card: char) -> Option<Player> {
+    fn winner(p1_card: char, p2_card: char, flop_card: char) -> Option<Player> {
         if p1_card == p2_card {
             return None;
-        } else if p1_card == hole_card {
+        } else if p1_card == flop_card {
             return Some(Player::P1);
-        } else if p2_card == hole_card {
+        } else if p2_card == flop_card {
             return Some(Player::P2);
         } else if p1_card == 'J' || p2_card == 'K' {
             return Some(Player::P2);

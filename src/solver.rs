@@ -37,24 +37,6 @@ fn calc_ev_inner(rule: &Rule, strt: &Strategy, node_id: &NodeId, prob: f64) -> f
     }
 }
 
-fn bfs_ord(rule: &Rule) -> Vec<NodeId> {
-    let mut ord: Vec<NodeId> = Vec::new();
-    let mut que: VecDeque<NodeId> = VecDeque::new();
-    que.push_back(rule.root);
-    ord.push(rule.root);
-    while !que.is_empty() {
-        let node_id = *que.front().unwrap();
-        que.pop_front();
-        if let Node::NonTerminal { edges, .. } = &rule.nodes[&node_id] {
-            for (_, child_id) in edges.iter() {
-                que.push_back(*child_id);
-                ord.push(*child_id);
-            }
-        }
-    }
-    ord
-}
-
 /// Calculate the optimal value of the expected value when `myself` is free to change the strategy.
 /// # Example
 /// ```
@@ -71,20 +53,6 @@ fn bfs_ord(rule: &Rule) -> Vec<NodeId> {
 /// assert!(solver::calc_best_resp(&rule, &player::Player::P2, &strt) <= -1.0 / 18.0);  // The expected value never increases.
 /// ```
 pub fn calc_best_resp(rule: &Rule, myself: &Player, strt: &Strategy) -> f64 {
-    let reach_pr: BTreeMap<NodeId, f64> = calc_prob_to_reach_terminal_node(rule, &strt)
-        .iter()
-        .map(|(node_id, (pr1, pr2, prc))| {
-            (
-                *node_id,
-                match myself {
-                    Player::P1 => pr2 * prc,
-                    Player::P2 => pr1 * prc,
-                    _ => panic!(),
-                },
-            )
-        })
-        .collect();
-
     let best_action_at =
         |utils: &BTreeMap<NodeId, f64>, info_set_id: &InformationSetId| -> &ActionId {
             assert_eq!(*myself, rule.player_by_info_set[info_set_id]);
@@ -100,6 +68,7 @@ pub fn calc_best_resp(rule: &Rule, myself: &Player, strt: &Strategy) -> f64 {
                 .unwrap()
         };
 
+    let reach_pr: BTreeMap<NodeId, f64> = calc_prob_to_reach_terminal_node(rule, &strt, myself);
     let ord = bfs_ord(rule);
     trace!("ord: {:?}", ord);
     let mut utils: BTreeMap<NodeId, f64> = BTreeMap::new();
@@ -136,70 +105,64 @@ pub fn calc_best_resp(rule: &Rule, myself: &Player, strt: &Strategy) -> f64 {
 fn calc_prob_to_reach_terminal_node(
     rule: &Rule,
     strt: &Strategy,
-) -> BTreeMap<NodeId, (f64, f64, f64)> {
-    let mut probs: BTreeMap<NodeId, (f64, f64, f64)> = BTreeMap::new();
-    calc_prob_to_reach_terminal_node_inner(&mut probs, rule, strt, &rule.root, 1.0, 1.0, 1.0);
+    except: &Player,
+) -> BTreeMap<NodeId, f64> {
+    let mut probs: BTreeMap<NodeId, f64> = BTreeMap::new();
+    calc_prob_to_reach_terminal_node_inner(&mut probs, rule, strt, &rule.root, except, 1.0);
     probs
 }
 
 fn calc_prob_to_reach_terminal_node_inner(
-    probs: &mut BTreeMap<NodeId, (f64, f64, f64)>,
+    probs: &mut BTreeMap<NodeId, f64>,
     rule: &Rule,
     strt: &Strategy,
     node_id: &NodeId,
-    pr1: f64,
-    pr2: f64,
-    prc: f64,
+    except: &Player,
+    p: f64,
 ) {
     match &rule.nodes[node_id] {
         Node::Terminal { .. } => {
-            probs.insert(*node_id, (pr1, pr2, prc));
+            probs.insert(*node_id, p);
         }
-        Node::NonTerminal { player, edges, .. } => match player {
-            Player::C => {
-                let dist = &rule.transition[node_id];
-                for (action_id, child_id) in edges {
-                    calc_prob_to_reach_terminal_node_inner(
-                        probs,
-                        rule,
-                        strt,
-                        child_id,
-                        pr1,
-                        pr2,
-                        prc * &dist[action_id],
-                    )
-                }
+        Node::NonTerminal { player, edges, .. } => {
+            let dist = match player {
+                Player::C => &rule.transition[node_id],
+                _ => &strt[&rule.info_set_id_by_node[node_id]],
+            };
+            for (action_id, child_id) in edges {
+                calc_prob_to_reach_terminal_node_inner(
+                    probs,
+                    rule,
+                    strt,
+                    child_id,
+                    except,
+                    if except == player {
+                        p
+                    } else {
+                        p * dist[action_id]
+                    },
+                )
             }
-            Player::P1 => {
-                let dist = &strt[&rule.info_set_id_by_node[node_id]];
-                for (action_id, child_id) in edges {
-                    calc_prob_to_reach_terminal_node_inner(
-                        probs,
-                        rule,
-                        strt,
-                        child_id,
-                        pr1 * &dist[action_id],
-                        pr2,
-                        prc,
-                    )
-                }
-            }
-            Player::P2 => {
-                let dist = &strt[&rule.info_set_id_by_node[node_id]];
-                for (action_id, child_id) in edges {
-                    calc_prob_to_reach_terminal_node_inner(
-                        probs,
-                        rule,
-                        strt,
-                        child_id,
-                        pr1,
-                        pr2 * &dist[action_id],
-                        prc,
-                    )
-                }
-            }
-        },
+        }
     }
+}
+
+fn bfs_ord(rule: &Rule) -> Vec<NodeId> {
+    let mut ord: Vec<NodeId> = Vec::new();
+    let mut que: VecDeque<NodeId> = VecDeque::new();
+    que.push_back(rule.root);
+    ord.push(rule.root);
+    while !que.is_empty() {
+        let node_id = *que.front().unwrap();
+        que.pop_front();
+        if let Node::NonTerminal { edges, .. } = &rule.nodes[&node_id] {
+            for (_, child_id) in edges.iter() {
+                que.push_back(*child_id);
+                ord.push(*child_id);
+            }
+        }
+    }
+    ord
 }
 
 /// Calculate minimum value of ε such that the given strategy is ε-Nash equilibrium
