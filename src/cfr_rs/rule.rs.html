@@ -219,20 +219,6 @@
 <span id="216">216</span>
 <span id="217">217</span>
 <span id="218">218</span>
-<span id="219">219</span>
-<span id="220">220</span>
-<span id="221">221</span>
-<span id="222">222</span>
-<span id="223">223</span>
-<span id="224">224</span>
-<span id="225">225</span>
-<span id="226">226</span>
-<span id="227">227</span>
-<span id="228">228</span>
-<span id="229">229</span>
-<span id="230">230</span>
-<span id="231">231</span>
-<span id="232">232</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Representation of *game rule*</span>
 
@@ -251,6 +237,7 @@
     <span class="kw">pub</span> <span class="ident">nodes</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">NodeId</span>, <span class="ident">Node</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">root</span>: <span class="ident">NodeId</span>,
     <span class="kw">pub</span> <span class="ident">info_partition</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">InformationSetId</span>, <span class="ident">InformationSet</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">info_set_details</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">InformationSetId</span>, <span class="ident">String</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">transition</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">NodeId</span>, <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">ActionId</span>, <span class="ident">f64</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">skip_deserializing</span>, <span class="ident">skip_serializing</span>)]</span>
@@ -259,8 +246,6 @@
     <span class="kw">pub</span> <span class="ident">actions_by_info_set</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">InformationSetId</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ActionId</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">skip_deserializing</span>, <span class="ident">skip_serializing</span>)]</span>
     <span class="kw">pub</span> <span class="ident">player_by_info_set</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">InformationSetId</span>, <span class="ident">Player</span><span class="op">&gt;</span>,
-    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">skip_deserializing</span>, <span class="ident">skip_serializing</span>)]</span>
-    <span class="kw">pub</span> <span class="ident">history</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">NodeId</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ActionId</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">Rule</span> {
@@ -269,7 +254,6 @@
         <span class="self">self</span>.<span class="ident">build_info_set_id_by_node</span>();
         <span class="self">self</span>.<span class="ident">build_actions_by_info_set</span>();
         <span class="self">self</span>.<span class="ident">build_player_by_info_set</span>();
-        <span class="self">self</span>.<span class="ident">build_history</span>();
     }
 
     <span class="doccomment">/// Calculate the mapping from a node id to its information set id.</span>
@@ -316,32 +300,6 @@
             }
         }
         <span class="macro">trace</span><span class="macro">!</span>(<span class="string">&quot;finish: build_player_by_info_set&quot;</span>);
-    }
-
-    <span class="doccomment">/// From the node id, calculate the history of the actions that led up to it.</span>
-    <span class="kw">fn</span> <span class="ident">build_history</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
-        <span class="macro">trace</span><span class="macro">!</span>(<span class="string">&quot;start: build_history&quot;</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">actions</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ActionId</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">history</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">NodeId</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ActionId</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">BTreeMap</span>::<span class="ident">new</span>();
-        <span class="self">self</span>.<span class="ident">build_history_inner</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">root</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">actions</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">history</span>);
-        <span class="self">self</span>.<span class="ident">history</span> <span class="op">=</span> <span class="ident">history</span>;
-        <span class="macro">trace</span><span class="macro">!</span>(<span class="string">&quot;finish: build_history&quot;</span>);
-    }
-
-    <span class="kw">fn</span> <span class="ident">build_history_inner</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">node_id</span>: <span class="kw-2">&amp;</span><span class="ident">NodeId</span>,
-        <span class="ident">actions</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ActionId</span><span class="op">&gt;</span>,
-        <span class="ident">history</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">NodeId</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ActionId</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    ) {
-        <span class="ident">history</span>.<span class="ident">insert</span>(<span class="kw-2">*</span><span class="ident">node_id</span>, <span class="ident">actions</span>.<span class="ident">clone</span>());
-        <span class="kw">if</span> <span class="kw">let</span> <span class="ident">Node</span>::<span class="ident">NonTerminal</span> { <span class="ident">edges</span>, .. } <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">node_id</span>] {
-            <span class="kw">for</span> (<span class="ident">action_id</span>, <span class="ident">child_id</span>) <span class="kw">in</span> <span class="ident">edges</span>.<span class="ident">iter</span>() {
-                <span class="ident">actions</span>.<span class="ident">push</span>(<span class="kw-2">*</span><span class="ident">action_id</span>);
-                <span class="self">self</span>.<span class="ident">build_history_inner</span>(<span class="ident">child_id</span>, <span class="ident">actions</span>, <span class="ident">history</span>);
-                <span class="ident">actions</span>.<span class="ident">pop</span>();
-            }
-        }
     }
 }
 
@@ -446,6 +404,20 @@
 <span class="doccomment">///   &quot;info_partition&quot;: {</span>
 <span class="doccomment">///     &quot;0&quot;: [0],</span>
 <span class="doccomment">///     &quot;1&quot;: [1,2,3]</span>
+<span class="doccomment">///   },</span>
+<span class="doccomment">///   &quot;info_set_details&quot;: {</span>
+<span class="doccomment">///     &quot;0&quot;: &quot;P1: J&quot;,</span>
+<span class="doccomment">///     &quot;1&quot;: &quot;P1: Q&quot;,</span>
+<span class="doccomment">///     &quot;2&quot;: &quot;P1: K&quot;,</span>
+<span class="doccomment">///     &quot;9&quot;: &quot;P1: J, P1-Check, P2-Bet&quot;,</span>
+<span class="doccomment">///     &quot;10&quot;: &quot;P1: Q, P1-Check, P2-Bet&quot;,</span>
+<span class="doccomment">///     &quot;11&quot;: &quot;P1: K, P1-Check, P2-Bet&quot;,</span>
+<span class="doccomment">///     &quot;3&quot;: &quot;P2: Q, P1-Check&quot;,</span>
+<span class="doccomment">///     &quot;4&quot;: &quot;P2: Q, P1-Bet&quot;,</span>
+<span class="doccomment">///     &quot;5&quot;: &quot;P2: K, P1-Check&quot;,</span>
+<span class="doccomment">///     &quot;6&quot;: &quot;P2: J, P1-Bet&quot;,</span>
+<span class="doccomment">///     &quot;7&quot;: &quot;P2: Q, P1-Check&quot;,</span>
+<span class="doccomment">///     &quot;8&quot;: &quot;P2: K, P1-Bet&quot;</span>
 <span class="doccomment">///   },</span>
 <span class="doccomment">///   &quot;transition&quot;: {</span>
 <span class="doccomment">///   }</span>
