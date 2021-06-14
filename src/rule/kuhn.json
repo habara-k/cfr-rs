@@ -407,6 +407,20 @@
     "7": [11,15],
     "8": [12,16]
   },
+  "info_set_details": {
+    "0": "P1: J",
+    "1": "P1: Q",
+    "2": "P1: K",
+    "9": "P1: J, P1-Check, P2-Bet",
+    "10": "P1: Q, P1-Check, P2-Bet",
+    "11": "P1: K, P1-Check, P2-Bet",
+    "3": "P2: Q, P1-Check",
+    "4": "P2: Q, P1-Bet",
+    "5": "P2: K, P1-Check",
+    "6": "P2: J, P1-Bet",
+    "7": "P2: Q, P1-Check",
+    "8": "P2: K, P1-Bet"
+  },
   "transition": {
     "0": {
       "4": 0.1666666666666666,
