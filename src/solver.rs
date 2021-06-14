@@ -53,7 +53,6 @@ fn calc_ev_inner(rule: &Rule, strt: &Strategy, node_id: &NodeId, prob: f64) -> f
 /// assert!(solver::calc_best_resp(&rule, &player::Player::P2, &strt) <= -1.0 / 18.0);  // The expected value never increases.
 /// ```
 pub fn calc_best_resp(rule: &Rule, myself: &Player, strt: &Strategy) -> f64 {
-
     let best_action_at =
         |utils: &BTreeMap<NodeId, f64>, info_set_id: &InformationSetId| -> &ActionId {
             assert_eq!(*myself, rule.player_by_info_set[info_set_id]);
@@ -137,10 +136,14 @@ fn calc_prob_to_reach_terminal_node_inner(
                     strt,
                     child_id,
                     except,
-                    if except == player { p } else { p * dist[action_id] },
+                    if except == player {
+                        p
+                    } else {
+                        p * dist[action_id]
+                    },
                 )
             }
-        },
+        }
     }
 }
 

@@ -17,5 +17,5 @@ pub mod player;
 pub mod rule;
 pub mod strategy;
 
-pub mod solver;
 pub mod cfr;
+pub mod solver;

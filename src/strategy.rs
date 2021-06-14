@@ -1,6 +1,10 @@
 //! Representation of *strategy* (probability distribution for possible *actions* in each *information set*)
 
-use super::{action::{ActionId, Action}, node::InformationSetId, rule::Rule};
+use super::{
+    action::{Action, ActionId},
+    node::InformationSetId,
+    rule::Rule,
+};
 use std::collections::BTreeMap;
 use std::fs;
 
@@ -74,8 +78,12 @@ pub fn to_string(strt: &Strategy, rule: &Rule) -> String {
     let strt: BTreeMap<String, BTreeMap<Action, f64>> = strt
         .iter()
         .map(|(info_set_id, dist)| {
-            (rule.info_set_details[&info_set_id].clone(),
-            dist.iter().map(|(action, p)| (rule.actions[action].clone(), *p)).collect())
+            (
+                rule.info_set_details[&info_set_id].clone(),
+                dist.iter()
+                    .map(|(action, p)| (rule.actions[action].clone(), *p))
+                    .collect(),
+            )
         })
         .collect();
     serde_json::to_string(&strt).unwrap()

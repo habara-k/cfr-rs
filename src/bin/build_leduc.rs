@@ -131,7 +131,8 @@ mod leduc {
                     } else {
                         let info_set_id = InformationSetId::new(self.info_set_id);
                         self.info_partition.insert(info_set_id, vec![s.node_id]);
-                        self.info_set_details.insert(info_set_id, detail(&obs, &player));
+                        self.info_set_details
+                            .insert(info_set_id, detail(&obs, &player));
                         self.observations.insert(obs, self.info_set_id);
                         self.info_set_id += 1;
                     }
@@ -248,42 +249,47 @@ mod leduc {
         if s.history[n - 1] == "Call"
             || (n >= 2 && s.history[n - 1] == "Check" && s.history[n - 2] == "Check")
         {
-            return Some(match s.history[0] {
-                "DealJQ" => vec![
-                    ("FlopJ", 1.0 / 4.0),
-                    ("FlopQ", 1.0 / 4.0),
-                    ("FlopK", 1.0 / 2.0),
-                ],
-                "DealJK" => vec![
-                    ("FlopJ", 1.0 / 4.0),
-                    ("FlopQ", 1.0 / 2.0),
-                    ("FlopK", 1.0 / 4.0),
-                ],
-                "DealQJ" => vec![
-                    ("FlopJ", 1.0 / 4.0),
-                    ("FlopQ", 1.0 / 4.0),
-                    ("FlopK", 1.0 / 2.0),
-                ],
-                "DealQK" => vec![
-                    ("FlopJ", 1.0 / 2.0),
-                    ("FlopQ", 1.0 / 4.0),
-                    ("FlopK", 1.0 / 4.0),
-                ],
-                "DealKJ" => vec![
-                    ("FlopJ", 1.0 / 4.0),
-                    ("FlopQ", 1.0 / 2.0),
-                    ("FlopK", 1.0 / 4.0),
-                ],
-                "DealKQ" => vec![
-                    ("FlopJ", 1.0 / 2.0),
-                    ("FlopQ", 1.0 / 4.0),
-                    ("FlopK", 1.0 / 4.0),
-                ],
-                "DealJJ" => vec![("FlopQ", 1.0 / 2.0), ("FlopK", 1.0 / 2.0)],
-                "DealQQ" => vec![("FlopJ", 1.0 / 2.0), ("FlopK", 1.0 / 2.0)],
-                "DealKK" => vec![("FlopJ", 1.0 / 2.0), ("FlopQ", 1.0 / 2.0)],
-                _ => panic!(),
-            }.iter().cloned().collect());
+            return Some(
+                match s.history[0] {
+                    "DealJQ" => vec![
+                        ("FlopJ", 1.0 / 4.0),
+                        ("FlopQ", 1.0 / 4.0),
+                        ("FlopK", 1.0 / 2.0),
+                    ],
+                    "DealJK" => vec![
+                        ("FlopJ", 1.0 / 4.0),
+                        ("FlopQ", 1.0 / 2.0),
+                        ("FlopK", 1.0 / 4.0),
+                    ],
+                    "DealQJ" => vec![
+                        ("FlopJ", 1.0 / 4.0),
+                        ("FlopQ", 1.0 / 4.0),
+                        ("FlopK", 1.0 / 2.0),
+                    ],
+                    "DealQK" => vec![
+                        ("FlopJ", 1.0 / 2.0),
+                        ("FlopQ", 1.0 / 4.0),
+                        ("FlopK", 1.0 / 4.0),
+                    ],
+                    "DealKJ" => vec![
+                        ("FlopJ", 1.0 / 4.0),
+                        ("FlopQ", 1.0 / 2.0),
+                        ("FlopK", 1.0 / 4.0),
+                    ],
+                    "DealKQ" => vec![
+                        ("FlopJ", 1.0 / 2.0),
+                        ("FlopQ", 1.0 / 4.0),
+                        ("FlopK", 1.0 / 4.0),
+                    ],
+                    "DealJJ" => vec![("FlopQ", 1.0 / 2.0), ("FlopK", 1.0 / 2.0)],
+                    "DealQQ" => vec![("FlopJ", 1.0 / 2.0), ("FlopK", 1.0 / 2.0)],
+                    "DealKK" => vec![("FlopJ", 1.0 / 2.0), ("FlopQ", 1.0 / 2.0)],
+                    _ => panic!(),
+                }
+                .iter()
+                .cloned()
+                .collect(),
+            );
         }
         return None;
     }
