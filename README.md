@@ -13,15 +13,15 @@ The library calculates ε-Nash equilibrium of **all** Imperfect-Information Exte
 - perfect recall
 - **relatively small**
 
+This library reads all the rules of a game from a JSON file. 
+The implementation is not specific to any particular game, so you can analyze any game that meets the above conditions.
+
 ## Quick Start
 
 You can calculate an ε-Nash equilibrium strategy for [Kuhn poker](https://en.wikipedia.org/wiki/Kuhn_poker) in `1,000,000` steps.
 ```
 $ cargo run --release --bin main src/rule/kuhn.json 1000000
 ```
-
-This library reads all the rules of a game from a JSON file. 
-The implementation is not specific to any particular game, so you can analyze any game that meets the above conditions.
 
 
 ## Benchmark
