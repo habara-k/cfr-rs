@@ -38,7 +38,6 @@ mod leduc {
         rule.info_partition = leduc.info_partition;
         rule.transition = leduc.transition;
         rule.info_set_details = leduc.info_set_details;
-        //rule.build();
         rule
     }
 
