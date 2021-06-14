@@ -25,20 +25,6 @@ pub enum Node {
 }
 
 impl Node {
-    pub fn is_terminal(&self) -> bool {
-        match self {
-            Node::Terminal { .. } => true,
-            Node::NonTerminal { .. } => false,
-        }
-    }
-
-    pub fn is_non_terminal(&self) -> bool {
-        match self {
-            Node::Terminal { .. } => false,
-            Node::NonTerminal { .. } => true,
-        }
-    }
-
     pub fn value(&self) -> &f64 {
         match self {
             Node::Terminal { value } => value,
