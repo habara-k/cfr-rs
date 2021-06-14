@@ -21,7 +21,7 @@ $ cargo run --release --bin main src/rule/kuhn.json 1000000
 ```
 
 This library reads all the rules of a game from a JSON file. 
-The implementation is not specific to any particular game, so it can analyze any game that meets the above conditions.
+The implementation is not specific to any particular game, so you can analyze any game that meets the above conditions.
 
 
 ## Benchmark
