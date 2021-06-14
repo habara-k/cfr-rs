@@ -148,63 +148,43 @@ fn cfr_dfs(
             }
 
             let info_set_id = &rule.info_set_id_by_node[node_id];
-            let action_util: BTreeMap<ActionId, f64> = match player {
-                Player::P1 => {
-                    for (action, _) in edges {
-                        *strt_sum
-                            .get_mut(info_set_id)
-                            .unwrap()
-                            .get_mut(action)
-                            .unwrap() += pr1 * strt[info_set_id][action];
-                    }
-                    edges
-                        .iter()
-                        .map(|(action_id, child_id)| {
-                            (
-                                *action_id,
-                                cfr_dfs(
-                                    rule,
-                                    regret_sum,
-                                    strt_sum,
-                                    strt,
-                                    child_id,
-                                    pr1 * strt[info_set_id][action_id],
-                                    pr2,
-                                    prc,
-                                ),
-                            )
-                        })
-                        .collect()
-                }
-                Player::P2 => {
-                    for (action, _) in edges {
-                        *strt_sum
-                            .get_mut(info_set_id)
-                            .unwrap()
-                            .get_mut(action)
-                            .unwrap() += pr2 * strt[info_set_id][action];
-                    }
-                    edges
-                        .iter()
-                        .map(|(action_id, child_id)| {
-                            (
-                                *action_id,
-                                cfr_dfs(
-                                    rule,
-                                    regret_sum,
-                                    strt_sum,
-                                    strt,
-                                    child_id,
-                                    pr1,
-                                    pr2 * strt[info_set_id][action_id],
-                                    prc,
-                                ),
-                            )
-                        })
-                        .collect()
-                }
-                _ => panic!(),
-            };
+            for (action_id, _) in edges {
+                *strt_sum
+                    .get_mut(info_set_id)
+                    .unwrap()
+                    .get_mut(action_id)
+                    .unwrap() += match player {
+                    Player::P1 => pr1,
+                    Player::P2 => pr2,
+                    _ => panic!(),
+                } * strt[info_set_id][action_id];
+            }
+            let action_util: BTreeMap<ActionId, f64> = edges
+                .iter()
+                .map(|(action_id, child_id)| {
+                    (
+                        *action_id,
+                        cfr_dfs(
+                            rule,
+                            regret_sum,
+                            strt_sum,
+                            strt,
+                            child_id,
+                            match player {
+                                Player::P1 => pr1 * strt[info_set_id][action_id],
+                                Player::P2 => pr2,
+                                _ => panic!(),
+                            },
+                            match player {
+                                Player::P1 => pr1,
+                                Player::P2 => pr2 * strt[info_set_id][action_id],
+                                _ => panic!(),
+                            },
+                            prc,
+                        ),
+                    )
+                })
+                .collect();
 
             let ret: f64 = action_util
                 .iter()
