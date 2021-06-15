@@ -1,4 +1,4 @@
-//! Representation of *strategy* (probability distribution for possible *actions* in each *information set*)
+//! Representation of *strategy* (probability distribution for legal *actions* in each *information set*)
 
 use super::{
     action::{Action, ActionId},

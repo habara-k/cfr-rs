@@ -45,7 +45,7 @@ impl Rule {
         trace!("finish: build_info_set_id_by_node");
     }
 
-    /// Calculate the mapping from the information set id to the possible actions there.
+    /// Calculate the mapping from the information set id to the legal actions there.
     fn build_actions_by_info_set(&mut self) {
         trace!("start: build_actions_by_info_set");
         for (info_set_id, info_set) in self.info_partition.iter() {
