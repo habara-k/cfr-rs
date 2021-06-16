@@ -257,7 +257,7 @@
         <span class="macro">trace</span><span class="macro">!</span>(<span class="string">&quot;finish: build_info_set_id_by_node&quot;</span>);
     }
 
-    <span class="doccomment">/// Calculate the mapping from the information set id to the possible actions there.</span>
+    <span class="doccomment">/// Calculate the mapping from the information set id to the legal actions there.</span>
     <span class="kw">fn</span> <span class="ident">build_actions_by_info_set</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
         <span class="macro">trace</span><span class="macro">!</span>(<span class="string">&quot;start: build_actions_by_info_set&quot;</span>);
         <span class="kw">for</span> (<span class="ident">info_set_id</span>, <span class="ident">info_set</span>) <span class="kw">in</span> <span class="self">self</span>.<span class="ident">info_partition</span>.<span class="ident">iter</span>() {
