@@ -14,6 +14,6 @@ plt.plot(
 plt.xscale('log')
 plt.yscale('log')
 plt.xlabel('step')
-plt.ylabel('ε')
+plt.ylabel('nashconv')
 plt.grid()
 plt.show()
