@@ -119,7 +119,7 @@ mod leduc {
                         },
                     );
                     self.transition.insert(s.node_id, dist);
-                } else if let Some((player, possible_actions)) = possible_actions(&s) {
+                } else if let Some((player, legal_actions)) = legal_actions(&s) {
                     // playable node
                     let obs = observation(&s, player);
                     if self.observations.contains_key(&obs) {
@@ -138,7 +138,7 @@ mod leduc {
                     }
 
                     let mut edges: BTreeMap<ActionId, NodeId> = BTreeMap::new();
-                    for &action in possible_actions.iter() {
+                    for &action in legal_actions.iter() {
                         let mut next_state = s.clone();
                         next_state.history.push(action);
                         match action {
@@ -339,7 +339,7 @@ mod leduc {
         }
     }
 
-    fn possible_actions(s: &State) -> Option<(Player, Vec<&'static str>)> {
+    fn legal_actions(s: &State) -> Option<(Player, Vec<&'static str>)> {
         if terminal_val(s).is_some() {
             return None;
         }
