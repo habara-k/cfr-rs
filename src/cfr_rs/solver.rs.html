@@ -181,13 +181,6 @@
 <span id="178">178</span>
 <span id="179">179</span>
 <span id="180">180</span>
-<span id="181">181</span>
-<span id="182">182</span>
-<span id="183">183</span>
-<span id="184">184</span>
-<span id="185">185</span>
-<span id="186">186</span>
-<span id="187">187</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Provide basic calculations.</span>
 
@@ -356,7 +349,7 @@
     <span class="ident">ord</span>
 }
 
-<span class="doccomment">/// Calculate minimum value of ε such that the given strategy is ε-Nash equilibrium</span>
+<span class="doccomment">/// Calculate NashConv: A common metric for determining the rates of convergence</span>
 <span class="doccomment">/// # Example</span>
 <span class="doccomment">/// ```</span>
 <span class="doccomment">/// use cfr_rs::*;</span>
@@ -364,17 +357,10 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// let rule = rule::from_path(&quot;src/rule/kuhn.json&quot;);</span>
 <span class="doccomment">/// let strt = strategy::from_path(&quot;src/strategy/kuhn_nash.json&quot;);</span>
-<span class="doccomment">/// assert_approx_eq!(solver::calc_min_epsilon(&amp;rule, &amp;strt), 0.0); // The nash equilibrium strategy is (ε=0)-Nash equilibrium.</span>
+<span class="doccomment">/// assert_approx_eq!(solver::calc_nash_conv(&amp;rule, &amp;strt), 0.0);</span>
 <span class="doccomment">/// ```</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">calc_min_epsilon</span>(<span class="ident">rule</span>: <span class="kw-2">&amp;</span><span class="ident">Rule</span>, <span class="ident">strt</span>: <span class="kw-2">&amp;</span><span class="ident">Strategy</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">f64</span> {
-    <span class="kw">let</span> <span class="ident">ev</span> <span class="op">=</span> <span class="ident">calc_ev</span>(<span class="ident">rule</span>, <span class="ident">strt</span>);
-    <span class="kw">let</span> <span class="ident">p1_improve</span> <span class="op">=</span> <span class="ident">calc_best_resp</span>(<span class="ident">rule</span>, <span class="kw-2">&amp;</span><span class="ident">Player</span>::<span class="ident">P1</span>, <span class="ident">strt</span>) <span class="op">-</span> <span class="ident">ev</span>;
-    <span class="kw">let</span> <span class="ident">p2_improve</span> <span class="op">=</span> <span class="ident">ev</span> <span class="op">-</span> <span class="ident">calc_best_resp</span>(<span class="ident">rule</span>, <span class="kw-2">&amp;</span><span class="ident">Player</span>::<span class="ident">P2</span>, <span class="ident">strt</span>);
-    <span class="kw">if</span> <span class="ident">p1_improve</span> <span class="op">&gt;</span> <span class="ident">p2_improve</span> {
-        <span class="ident">p1_improve</span>
-    } <span class="kw">else</span> {
-        <span class="ident">p2_improve</span>
-    }
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">calc_nash_conv</span>(<span class="ident">rule</span>: <span class="kw-2">&amp;</span><span class="ident">Rule</span>, <span class="ident">strt</span>: <span class="kw-2">&amp;</span><span class="ident">Strategy</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">f64</span> {
+    <span class="ident">calc_best_resp</span>(<span class="ident">rule</span>, <span class="kw-2">&amp;</span><span class="ident">Player</span>::<span class="ident">P1</span>, <span class="ident">strt</span>) <span class="op">-</span> <span class="ident">calc_best_resp</span>(<span class="ident">rule</span>, <span class="kw-2">&amp;</span><span class="ident">Player</span>::<span class="ident">P2</span>, <span class="ident">strt</span>)
 }
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="cfr_rs" data-search-js="../../search-index.js"></div>

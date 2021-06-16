@@ -238,7 +238,7 @@
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">strt_sum</span> <span class="op">=</span> <span class="ident">strategy</span>::<span class="ident">new</span>(<span class="ident">rule</span>);
 
     <span class="kw">let</span> <span class="ident">split</span> <span class="op">=</span> <span class="number">100</span>;
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">epsilon</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">f64</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">BTreeMap</span>::<span class="ident">new</span>();
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">nash_conv</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">f64</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">BTreeMap</span>::<span class="ident">new</span>();
 
     <span class="kw">for</span> <span class="ident">t</span> <span class="kw">in</span> (<span class="number">1</span>..<span class="ident">step</span> <span class="op">+</span> <span class="number">1</span>).<span class="ident">progress</span>() {
         <span class="ident">cfr_dfs</span>(
@@ -255,9 +255,9 @@
         <span class="kw">if</span> ((<span class="ident">t</span> <span class="kw">as</span> <span class="ident">f64</span>).<span class="ident">log2</span>() <span class="op">*</span> <span class="ident">split</span> <span class="kw">as</span> <span class="ident">f64</span> <span class="op">/</span> (<span class="ident">step</span> <span class="kw">as</span> <span class="ident">f64</span>).<span class="ident">log2</span>()) <span class="kw">as</span> <span class="ident">i32</span>
             <span class="op">!</span><span class="op">=</span> (((<span class="ident">t</span> <span class="op">-</span> <span class="number">1</span>) <span class="kw">as</span> <span class="ident">f64</span>).<span class="ident">log2</span>() <span class="op">*</span> <span class="ident">split</span> <span class="kw">as</span> <span class="ident">f64</span> <span class="op">/</span> (<span class="ident">step</span> <span class="kw">as</span> <span class="ident">f64</span>).<span class="ident">log2</span>()) <span class="kw">as</span> <span class="ident">i32</span>
         {
-            <span class="ident">epsilon</span>.<span class="ident">insert</span>(
+            <span class="ident">nash_conv</span>.<span class="ident">insert</span>(
                 <span class="ident">t</span>,
-                <span class="ident">solver</span>::<span class="ident">calc_min_epsilon</span>(
+                <span class="ident">solver</span>::<span class="ident">calc_nash_conv</span>(
                     <span class="kw-2">&amp;</span><span class="ident">rule</span>,
                     <span class="kw-2">&amp;</span><span class="ident">strt_sum</span>
                         .<span class="ident">iter</span>()
@@ -270,7 +270,7 @@
         <span class="ident">latest_strt</span> <span class="op">=</span> <span class="ident">to_strategy</span>(<span class="kw-2">&amp;</span><span class="ident">regret_sum</span>);
     }
 
-    <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;epsilon: {}&quot;</span>, <span class="ident">serde_json</span>::<span class="ident">to_string</span>(<span class="kw-2">&amp;</span><span class="ident">epsilon</span>).<span class="ident">unwrap</span>());
+    <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;nash_conv: {}&quot;</span>, <span class="ident">serde_json</span>::<span class="ident">to_string</span>(<span class="kw-2">&amp;</span><span class="ident">nash_conv</span>).<span class="ident">unwrap</span>());
 
     <span class="ident">strt_sum</span>
         .<span class="ident">into_iter</span>()
