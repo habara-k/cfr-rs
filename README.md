@@ -32,11 +32,11 @@ $ cargo run --release --bin main src/rule/kuhn.json 1000000
   - 3.2 GHz CPU
   - 8 GB RAM
 
-The library calculates a strategy in `17.3 ± 0.1` sec.
+The library calculates a strategy in `16.8 ± 0.7` sec.
 
-The ε value of ε-Nash equilibrium decreases in `O(1/√step)`.
+The value of NashConv, A common metric for determining the rates of convergence, decreases in `O(1/√step)`.
 <p align="center">
-<img src="https://user-images.githubusercontent.com/34413567/121806896-b9d27f80-cc8c-11eb-876d-7b71f99aef62.png" width="600">
+<img src="https://user-images.githubusercontent.com/34413567/122157543-f88f5200-cea5-11eb-8dd6-c36b0045adfb.png" width="600">
 </p>
 
 ## Documents
