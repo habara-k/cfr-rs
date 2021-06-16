@@ -165,7 +165,7 @@ fn bfs_ord(rule: &Rule) -> Vec<NodeId> {
     ord
 }
 
-/// Calculate minimum value of ε such that the given strategy is ε-Nash equilibrium
+/// Calculate NashConv: A common metric for determining the rates of convergence
 /// # Example
 /// ```
 /// use cfr_rs::*;
@@ -173,15 +173,8 @@ fn bfs_ord(rule: &Rule) -> Vec<NodeId> {
 ///
 /// let rule = rule::from_path("src/rule/kuhn.json");
 /// let strt = strategy::from_path("src/strategy/kuhn_nash.json");
-/// assert_approx_eq!(solver::calc_min_epsilon(&rule, &strt), 0.0); // The nash equilibrium strategy is (ε=0)-Nash equilibrium.
+/// assert_approx_eq!(solver::calc_nash_conv(&rule, &strt), 0.0);
 /// ```
-pub fn calc_min_epsilon(rule: &Rule, strt: &Strategy) -> f64 {
-    let ev = calc_ev(rule, strt);
-    let p1_improve = calc_best_resp(rule, &Player::P1, strt) - ev;
-    let p2_improve = ev - calc_best_resp(rule, &Player::P2, strt);
-    if p1_improve > p2_improve {
-        p1_improve
-    } else {
-        p2_improve
-    }
+pub fn calc_nash_conv(rule: &Rule, strt: &Strategy) -> f64 {
+    calc_best_resp(rule, &Player::P1, strt) - calc_best_resp(rule, &Player::P2, strt)
 }
