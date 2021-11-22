@@ -69,7 +69,7 @@ mod regret {
     use super::*;
     pub type Regret = BTreeMap<InformationSetId, BTreeMap<ActionId, f64>>;
     pub fn new(rule: &Rule) -> Regret {
-        rule.info_partition
+        rule.info_sets
             .iter()
             .map(|(info_set_id, _)| {
                 (

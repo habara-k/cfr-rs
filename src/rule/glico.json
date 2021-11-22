@@ -92,7 +92,7 @@
     }
   },
   "root": 0,
-  "info_partition": {
+  "info_sets": {
     "0": [0],
     "1": [1,2,3]
   },

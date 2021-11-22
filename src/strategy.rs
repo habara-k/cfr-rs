@@ -12,7 +12,7 @@ pub type Strategy = BTreeMap<InformationSetId, BTreeMap<ActionId, f64>>;
 
 /// Get the `Strategy` filled with zeros.
 pub fn new(rule: &Rule) -> Strategy {
-    rule.info_partition
+    rule.info_sets
         .iter()
         .map(|(info_set_id, _)| {
             (
@@ -28,7 +28,7 @@ pub fn new(rule: &Rule) -> Strategy {
 
 /// Get a uniform `Strategy` (taking actions with equal probability).
 pub fn uniform(rule: &Rule) -> Strategy {
-    rule.info_partition
+    rule.info_sets
         .iter()
         .map(|(info_set_id, _)| {
             (*info_set_id, {

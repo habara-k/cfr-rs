@@ -35,7 +35,7 @@ mod leduc {
         rule.actions = leduc.actions;
         rule.nodes = leduc.nodes;
         rule.root = NodeId::new(0);
-        rule.info_partition = leduc.info_partition;
+        rule.info_sets = leduc.info_sets;
         rule.transition = leduc.transition;
         rule.info_set_details = leduc.info_set_details;
         rule
@@ -49,7 +49,7 @@ mod leduc {
         node_id: usize,
         transition: BTreeMap<NodeId, BTreeMap<ActionId, f64>>,
         observations: BTreeMap<Vec<&'static str>, usize>,
-        info_partition: BTreeMap<InformationSetId, InformationSet>,
+        info_sets: BTreeMap<InformationSetId, InformationSet>,
         info_set_id: usize,
         info_set_details: BTreeMap<InformationSetId, String>,
     }
@@ -124,13 +124,13 @@ mod leduc {
                     let obs = observation(&s, player);
                     if self.observations.contains_key(&obs) {
                         let info_set_id = InformationSetId::new(self.observations[&obs]);
-                        self.info_partition
+                        self.info_sets
                             .get_mut(&info_set_id)
                             .unwrap()
                             .push(s.node_id);
                     } else {
                         let info_set_id = InformationSetId::new(self.info_set_id);
-                        self.info_partition.insert(info_set_id, vec![s.node_id]);
+                        self.info_sets.insert(info_set_id, vec![s.node_id]);
                         self.info_set_details
                             .insert(info_set_id, detail(&obs, &player));
                         self.observations.insert(obs, self.info_set_id);
