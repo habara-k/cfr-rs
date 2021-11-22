@@ -148,16 +148,17 @@ fn cfr_dfs(
             }
 
             let info_set_id = &rule.info_set_id_by_node[node_id];
+            let pr_myself = match player {
+                Player::P1 => pr1,
+                Player::P2 => pr2,
+                _ => panic!(),
+            };
             for (action_id, _) in edges {
                 *strt_sum
                     .get_mut(info_set_id)
                     .unwrap()
                     .get_mut(action_id)
-                    .unwrap() += match player {
-                    Player::P1 => pr1,
-                    Player::P2 => pr2,
-                    _ => panic!(),
-                } * strt[info_set_id][action_id];
+                    .unwrap() += pr_myself * strt[info_set_id][action_id];
             }
             let action_util: BTreeMap<ActionId, f64> = edges
                 .iter()
@@ -172,11 +173,11 @@ fn cfr_dfs(
                             child_id,
                             match player {
                                 Player::P1 => pr1 * strt[info_set_id][action_id],
-                                Player::P2 => pr2,
+                                Player::P2 => pr1,
                                 _ => panic!(),
                             },
                             match player {
-                                Player::P1 => pr1,
+                                Player::P1 => pr2,
                                 Player::P2 => pr2 * strt[info_set_id][action_id],
                                 _ => panic!(),
                             },
@@ -186,7 +187,7 @@ fn cfr_dfs(
                 })
                 .collect();
 
-            let ret: f64 = action_util
+            let avg_util: f64 = action_util
                 .iter()
                 .map(|(action_id, util)| strt[info_set_id][action_id] * util)
                 .sum();
@@ -201,9 +202,9 @@ fn cfr_dfs(
                     .get_mut(info_set_id)
                     .unwrap()
                     .get_mut(action)
-                    .unwrap() += player.sign() * (util - ret) * pr_except;
+                    .unwrap() += player.sign() * (util - avg_util) * pr_except;
             }
-            ret
+            avg_util
         }
     }
 }
