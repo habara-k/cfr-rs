@@ -14,7 +14,7 @@ pub struct Rule {
     pub actions: BTreeMap<ActionId, Action>,
     pub nodes: BTreeMap<NodeId, Node>,
     pub root: NodeId,
-    pub info_partition: BTreeMap<InformationSetId, InformationSet>,
+    pub info_sets: BTreeMap<InformationSetId, InformationSet>,
     pub info_set_details: BTreeMap<InformationSetId, String>,
     pub transition: BTreeMap<NodeId, BTreeMap<ActionId, f64>>,
 
@@ -37,7 +37,7 @@ impl Rule {
     /// Calculate the mapping from a node id to its information set id.
     fn build_info_set_id_by_node(&mut self) {
         trace!("start: build_info_set_id_by_node");
-        for (info_set_id, info_set) in self.info_partition.iter() {
+        for (info_set_id, info_set) in self.info_sets.iter() {
             for node_id in info_set.iter() {
                 self.info_set_id_by_node.insert(*node_id, *info_set_id);
             }
@@ -48,7 +48,7 @@ impl Rule {
     /// Calculate the mapping from the information set id to the legal actions there.
     fn build_actions_by_info_set(&mut self) {
         trace!("start: build_actions_by_info_set");
-        for (info_set_id, info_set) in self.info_partition.iter() {
+        for (info_set_id, info_set) in self.info_sets.iter() {
             for node_id in info_set.iter() {
                 if let Node::NonTerminal { edges, .. } = &self.nodes[node_id] {
                     let actions: Vec<ActionId> = edges.keys().cloned().collect();
@@ -66,7 +66,7 @@ impl Rule {
     /// Calculate the mapping from the information set id to the player taking action there.
     fn build_player_by_info_set(&mut self) {
         trace!("start: build_player_by_info_set");
-        for (info_set_id, info_set) in self.info_partition.iter() {
+        for (info_set_id, info_set) in self.info_sets.iter() {
             for node_id in info_set.iter() {
                 if let Node::NonTerminal { player, .. } = &self.nodes[node_id] {
                     if self.player_by_info_set.contains_key(info_set_id) {
@@ -179,7 +179,7 @@ impl Rule {
 ///     }
 ///   },
 ///   "root": 0,
-///   "info_partition": {
+///   "info_sets": {
 ///     "0": [0],
 ///     "1": [1,2,3]
 ///   },

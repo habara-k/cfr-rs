@@ -2,3 +2,4 @@
 /log
 /.idea
 /venv
+.DS_Store
