@@ -29,7 +29,7 @@ fn calc_ev_inner(rule: &Rule, strt: &Strategy, node_id: &NodeId, prob: f64) -> f
         Node::Terminal { value } => *value * prob,
         Node::NonTerminal { edges, player } => match player {
             Player::C => &rule.transition[node_id],
-            _ => &strt[&rule.info_set_id_by_node[node_id]],
+            _ => &strt[&rule.info_set_including_node[node_id]],
         }
         .iter()
         .map(|(action, p)| calc_ev_inner(rule, strt, &edges[action], prob) * p)
@@ -55,8 +55,8 @@ fn calc_ev_inner(rule: &Rule, strt: &Strategy, node_id: &NodeId, prob: f64) -> f
 pub fn calc_best_resp(rule: &Rule, myself: &Player, strt: &Strategy) -> f64 {
     let best_action_at =
         |utils: &BTreeMap<NodeId, f64>, info_set_id: &InformationSetId| -> &ActionId {
-            assert_eq!(*myself, rule.player_by_info_set[info_set_id]);
-            rule.actions_by_info_set[info_set_id]
+            assert_eq!(*myself, rule.player_at_info_set[info_set_id]);
+            rule.actions_at_info_set[info_set_id]
                 .iter()
                 .ord_subset_max_by_key(|action_id| -> f64 {
                     rule.info_sets[info_set_id]
@@ -83,7 +83,7 @@ pub fn calc_best_resp(rule: &Rule, myself: &Player, strt: &Strategy) -> f64 {
                 utils.insert(
                     *node_id,
                     if player == myself {
-                        let info_set_id = &rule.info_set_id_by_node[node_id];
+                        let info_set_id = &rule.info_set_including_node[node_id];
                         if !best_actions.contains_key(&info_set_id) {
                             let best_action_id = best_action_at(&utils, info_set_id);
                             best_actions.insert(*info_set_id, *best_action_id);
@@ -127,7 +127,7 @@ fn calc_prob_to_reach_terminal_node_inner(
         Node::NonTerminal { player, edges, .. } => {
             let dist = match player {
                 Player::C => &rule.transition[node_id],
-                _ => &strt[&rule.info_set_id_by_node[node_id]],
+                _ => &strt[&rule.info_set_including_node[node_id]],
             };
             for (action_id, child_id) in edges {
                 calc_prob_to_reach_terminal_node_inner(

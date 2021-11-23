@@ -17,4 +17,7 @@ impl Action {
     pub fn new(action: &str) -> Self {
         Action(String::from(action))
     }
+    pub fn to_str(&self) -> &str {
+        &self.0
+    }
 }
