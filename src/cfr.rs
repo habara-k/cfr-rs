@@ -190,8 +190,8 @@ fn cfr_dfs(
                                 strt_sum,
                                 strt,
                                 child_id,
-                                pr1 * strt[info_set_id][action_id],
-                                pr2,
+                                pr1,
+                                pr2 * strt[info_set_id][action_id],
                                 prc,
                             ),
                         )
