@@ -160,32 +160,45 @@ fn cfr_dfs(
                     .get_mut(action_id)
                     .unwrap() += pr_myself * strt[info_set_id][action_id];
             }
-            let action_util: BTreeMap<ActionId, f64> = edges
-                .iter()
-                .map(|(action_id, child_id)| {
-                    (
-                        *action_id,
-                        cfr_dfs(
-                            rule,
-                            regret_sum,
-                            strt_sum,
-                            strt,
-                            child_id,
-                            match player {
-                                Player::P1 => pr1 * strt[info_set_id][action_id],
-                                Player::P2 => pr1,
-                                _ => panic!(),
-                            },
-                            match player {
-                                Player::P1 => pr2,
-                                Player::P2 => pr2 * strt[info_set_id][action_id],
-                                _ => panic!(),
-                            },
-                            prc,
-                        ),
-                    )
-                })
-                .collect();
+            let action_util: BTreeMap<ActionId, f64> = match player {
+                Player::P1 => edges
+                    .iter()
+                    .map(|(action_id, child_id)| {
+                        (
+                            *action_id,
+                            cfr_dfs(
+                                rule,
+                                regret_sum,
+                                strt_sum,
+                                strt,
+                                child_id,
+                                pr1 * strt[info_set_id][action_id],
+                                pr2,
+                                prc,
+                            ),
+                        )
+                    })
+                    .collect(),
+                Player::P2 => edges
+                    .iter()
+                    .map(|(action_id, child_id)| {
+                        (
+                            *action_id,
+                            cfr_dfs(
+                                rule,
+                                regret_sum,
+                                strt_sum,
+                                strt,
+                                child_id,
+                                pr1 * strt[info_set_id][action_id],
+                                pr2,
+                                prc,
+                            ),
+                        )
+                    })
+                    .collect(),
+                _ => panic!(),
+            };
 
             let avg_util: f64 = action_util
                 .iter()
