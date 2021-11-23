@@ -36,7 +36,7 @@ The library calculates a strategy in `16.8 ± 0.7` sec.
 
 The value of NashConv, A common metric for determining the rates of convergence, decreases in `O(1/√step)`.
 <p align="center">
-<img src="https://user-images.githubusercontent.com/34413567/122167227-9dfdf200-ceb5-11eb-8dd8-5023d7e17913.png" width="600">
+<img src="https://user-images.githubusercontent.com/34413567/142921379-98354320-5793-4457-bf18-d900c046475a.png" width="600">
 </p>
 
 ## Documents
