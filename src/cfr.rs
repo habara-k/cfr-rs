@@ -74,7 +74,7 @@ mod regret {
             .map(|(info_set_id, _)| {
                 (
                     *info_set_id,
-                    rule.actions_by_info_set[info_set_id]
+                    rule.actions_at_info_set[info_set_id]
                         .iter()
                         .map(|action_id| (*action_id, 0.0))
                         .collect(),
@@ -147,7 +147,7 @@ fn cfr_dfs(
                     .sum();
             }
 
-            let info_set_id = &rule.info_set_id_by_node[node_id];
+            let info_set_id = &rule.info_set_including_node[node_id];
             let pr_myself = match player {
                 Player::P1 => pr1,
                 Player::P2 => pr2,

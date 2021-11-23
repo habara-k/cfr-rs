@@ -17,7 +17,7 @@ pub fn new(rule: &Rule) -> Strategy {
         .map(|(info_set_id, _)| {
             (
                 *info_set_id,
-                rule.actions_by_info_set[info_set_id]
+                rule.actions_at_info_set[info_set_id]
                     .iter()
                     .map(|action_id| (*action_id, 0.0))
                     .collect(),
@@ -32,8 +32,8 @@ pub fn uniform(rule: &Rule) -> Strategy {
         .iter()
         .map(|(info_set_id, _)| {
             (*info_set_id, {
-                let prob = 1.0 / rule.actions_by_info_set[info_set_id].len() as f64;
-                rule.actions_by_info_set[info_set_id]
+                let prob = 1.0 / rule.actions_at_info_set[info_set_id].len() as f64;
+                rule.actions_at_info_set[info_set_id]
                     .iter()
                     .map(|action_id| (*action_id, prob))
                     .collect()

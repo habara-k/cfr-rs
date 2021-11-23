@@ -19,65 +19,64 @@ pub struct Rule {
     pub transition: BTreeMap<NodeId, BTreeMap<ActionId, f64>>,
 
     #[serde(skip_deserializing, skip_serializing)]
-    pub info_set_id_by_node: BTreeMap<NodeId, InformationSetId>,
+    pub info_set_including_node: BTreeMap<NodeId, InformationSetId>,
     #[serde(skip_deserializing, skip_serializing)]
-    pub actions_by_info_set: BTreeMap<InformationSetId, Vec<ActionId>>,
+    pub actions_at_info_set: BTreeMap<InformationSetId, Vec<ActionId>>,
     #[serde(skip_deserializing, skip_serializing)]
-    pub player_by_info_set: BTreeMap<InformationSetId, Player>,
+    pub player_at_info_set: BTreeMap<InformationSetId, Player>,
 }
 
 impl Rule {
     /// Calculate values that are not needed for game definition but are helpful for calculations.
     pub fn build(&mut self) {
-        self.build_info_set_id_by_node();
-        self.build_actions_by_info_set();
-        self.build_player_by_info_set();
+        self.build_node_to_info_set();
+        self.build_info_set_to_actions();
+        self.build_info_set_to_player();
     }
 
     /// Calculate the mapping from a node id to its information set id.
-    fn build_info_set_id_by_node(&mut self) {
-        trace!("start: build_info_set_id_by_node");
+    fn build_node_to_info_set(&mut self) {
+        trace!("start: build_node_to_info_set");
         for (info_set_id, info_set) in self.info_sets.iter() {
             for node_id in info_set.iter() {
-                self.info_set_id_by_node.insert(*node_id, *info_set_id);
+                self.info_set_including_node.insert(*node_id, *info_set_id);
             }
         }
-        trace!("finish: build_info_set_id_by_node");
+        trace!("finish: build_node_to_info_set");
     }
-
     /// Calculate the mapping from the information set id to the legal actions there.
-    fn build_actions_by_info_set(&mut self) {
-        trace!("start: build_actions_by_info_set");
+    fn build_info_set_to_actions(&mut self) {
+        trace!("start: build_info_set_to_actions");
         for (info_set_id, info_set) in self.info_sets.iter() {
             for node_id in info_set.iter() {
                 if let Node::NonTerminal { edges, .. } = &self.nodes[node_id] {
                     let actions: Vec<ActionId> = edges.keys().cloned().collect();
-                    if self.actions_by_info_set.contains_key(info_set_id) {
-                        assert_eq!(actions, self.actions_by_info_set[info_set_id]);
+                    if self.actions_at_info_set.contains_key(info_set_id) {
+                        assert_eq!(actions, self.actions_at_info_set[info_set_id]);
                     } else {
-                        self.actions_by_info_set.insert(*info_set_id, actions);
+                        self.actions_at_info_set.insert(*info_set_id, actions);
                     }
                 }
             }
         }
-        trace!("finish: build_actions_by_info_set");
+        trace!("finish: build_info_set_to_actions");
     }
 
     /// Calculate the mapping from the information set id to the player taking action there.
-    fn build_player_by_info_set(&mut self) {
-        trace!("start: build_player_by_info_set");
+    fn build_info_set_to_player(&mut self) {
+        trace!("start: build_info_set_to_player");
         for (info_set_id, info_set) in self.info_sets.iter() {
             for node_id in info_set.iter() {
                 if let Node::NonTerminal { player, .. } = &self.nodes[node_id] {
-                    if self.player_by_info_set.contains_key(info_set_id) {
-                        assert_eq!(*player, self.player_by_info_set[info_set_id]);
+                    if self.player_at_info_set.contains_key(info_set_id) {
+                        assert_eq!(*player, self.player_at_info_set[info_set_id]);
                     } else {
-                        self.player_by_info_set.insert(*info_set_id, *player);
+                        self.player_at_info_set.insert(*info_set_id, *player);
                     }
                 }
             }
         }
-        trace!("finish: build_player_by_info_set");
+        trace!("finish: build_info_set_to_player");
     }
 }
 
