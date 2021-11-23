@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["detail",""],["rule","Get `Rule` of Leduc Hold’em"],["winner",""]],"struct":[["Leduc",""],["State",""]]});
+initSidebarItems({"fn":[["rule","Get `Rule` of Leduc Hold’em"]],"struct":[["RuleBuilder",""]]});
