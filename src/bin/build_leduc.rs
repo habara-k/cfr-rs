@@ -35,7 +35,10 @@ mod leduc {
         fn build(&mut self) {
             self.initialize();
 
-            let bet: BTreeMap<Player, i32> = vec![(Player::P1, 0), (Player::P2, 0)].iter().cloned().collect();
+            let bet: BTreeMap<Player, i32> = vec![(Player::P1, 0), (Player::P2, 0)]
+                .iter()
+                .cloned()
+                .collect();
             let hole_card: BTreeMap<Player, char> = BTreeMap::new();
             let history: Vec<(Player, ActionId)> = Vec::new();
             self.rule.root = self.dfs(2, &bet, &hole_card, None, &history);
@@ -49,7 +52,6 @@ mod leduc {
             flop_card: Option<char>,
             history: &Vec<(Player, ActionId)>,
         ) -> NodeId {
-
             // chance node
             if hole_card.is_empty() {
                 // deal hole cards
@@ -66,10 +68,13 @@ mod leduc {
                 let node_id = NodeId::new(self.node_size);
                 self.node_size += 1;
                 self.rule.transition.insert(node_id, trans);
-                self.rule.nodes.insert(node_id, Node::NonTerminal {
-                    player: Player::C,
-                    edges,
-                });
+                self.rule.nodes.insert(
+                    node_id,
+                    Node::NonTerminal {
+                        player: Player::C,
+                        edges,
+                    },
+                );
                 return node_id;
             }
 
@@ -77,7 +82,10 @@ mod leduc {
                 // open flop card
 
                 let pot = pot + bet.values().sum::<i32>();
-                let bet: BTreeMap<Player, i32> = vec![(Player::P1, 0), (Player::P2, 0)].iter().cloned().collect();
+                let bet: BTreeMap<Player, i32> = vec![(Player::P1, 0), (Player::P2, 0)]
+                    .iter()
+                    .cloned()
+                    .collect();
 
                 let mut trans: BTreeMap<ActionId, f64> = BTreeMap::new();
                 let mut edges: BTreeMap<ActionId, NodeId> = BTreeMap::new();
@@ -92,10 +100,13 @@ mod leduc {
                 let node_id = NodeId::new(self.node_size);
                 self.node_size += 1;
                 self.rule.transition.insert(node_id, trans);
-                self.rule.nodes.insert(node_id, Node::NonTerminal {
-                    player: Player::C,
-                    edges,
-                });
+                self.rule.nodes.insert(
+                    node_id,
+                    Node::NonTerminal {
+                        player: Player::C,
+                        edges,
+                    },
+                );
                 return node_id;
             }
 
@@ -115,21 +126,22 @@ mod leduc {
             for action_id in legal_actions {
                 let mut bet = bet.clone();
                 match self.rule.actions[&action_id].to_str() {
-                    "Fold" | "Check" => {},
+                    "Fold" | "Check" => {}
                     "Call" => {
                         bet.insert(player, bet[&player.opponent()]);
-                    },
+                    }
                     "Raise" => {
-                        let raise_size = bet[&player.opponent()] + if flop_card.is_some() {
-                            4
-                        } else if pot == 2 && bet[&player.opponent()] == 0 {
-                            1
-                        } else {
-                            2
-                        };
+                        let raise_size = bet[&player.opponent()]
+                            + if flop_card.is_some() {
+                                4
+                            } else if pot == 2 && bet[&player.opponent()] == 0 {
+                                1
+                            } else {
+                                2
+                            };
                         bet.insert(player, raise_size);
-                    },
-                    _ => unreachable!()
+                    }
+                    _ => unreachable!(),
                 }
                 let mut history = history.clone();
                 history.push((player, action_id));
@@ -139,13 +151,15 @@ mod leduc {
             }
             let node_id = NodeId::new(self.node_size);
             self.node_size += 1;
-            self.rule.nodes
+            self.rule
+                .nodes
                 .insert(node_id, Node::NonTerminal { player, edges });
 
             // update information set
             let obs = self.observation(&player, history, hole_card);
             if self.obs_to_info_set_id.contains_key(&obs) {
-                self.rule.info_sets
+                self.rule
+                    .info_sets
                     .get_mut(&self.obs_to_info_set_id[&obs])
                     .unwrap()
                     .push(node_id);
@@ -160,41 +174,65 @@ mod leduc {
             return node_id;
         }
 
-        fn legal_actions(&self, history: &Vec<(Player, ActionId)>, bet: &BTreeMap<Player, i32>) -> (Player, Vec<ActionId>) {
+        fn legal_actions(
+            &self,
+            history: &Vec<(Player, ActionId)>,
+            bet: &BTreeMap<Player, i32>,
+        ) -> (Player, Vec<ActionId>) {
             // Require: next player is Player::P1 or Player::P2
             let last_player = history.last().unwrap().0;
             let last_action = &self.rule.actions[&history.last().unwrap().1];
             match last_player {
-                Player::C => (Player::P1, vec!["Check", "Raise"].iter().map(|action| self.action_id[&Action::new(action)]).collect()),
-                Player::P1 => {
-                    (
-                        Player::P2,
-                        match last_action.to_str() {
-                            "Check" => vec!["Check", "Raise"],
-                            "Raise" => if bet[&Player::P2] == 0 { vec!["Fold", "Call", "Raise"] } else { vec!["Fold", "Call"] },
-                            _ => unreachable!(),
-                        }.iter().map(|action| self.action_id[&Action::new(action)]).collect()
-                    )
-                },
-                Player::P2 => {
-                    (
-                        Player::P1,
-                        match last_action.to_str() {
-                            "Raise" => if bet[&Player::P1] == 0 { vec!["Fold", "Call", "Raise"] } else { vec!["Fold", "Call"] },
-                            _ => unreachable!(),
-                        }.iter().map(|action| self.action_id[&Action::new(action)]).collect()
-                    )
-                }
+                Player::C => (
+                    Player::P1,
+                    vec!["Check", "Raise"]
+                        .iter()
+                        .map(|action| self.action_id[&Action::new(action)])
+                        .collect(),
+                ),
+                Player::P1 => (
+                    Player::P2,
+                    match last_action.to_str() {
+                        "Check" => vec!["Check", "Raise"],
+                        "Raise" => {
+                            if bet[&Player::P2] == 0 {
+                                vec!["Fold", "Call", "Raise"]
+                            } else {
+                                vec!["Fold", "Call"]
+                            }
+                        }
+                        _ => unreachable!(),
+                    }
+                    .iter()
+                    .map(|action| self.action_id[&Action::new(action)])
+                    .collect(),
+                ),
+                Player::P2 => (
+                    Player::P1,
+                    match last_action.to_str() {
+                        "Raise" => {
+                            if bet[&Player::P1] == 0 {
+                                vec!["Fold", "Call", "Raise"]
+                            } else {
+                                vec!["Fold", "Call"]
+                            }
+                        }
+                        _ => unreachable!(),
+                    }
+                    .iter()
+                    .map(|action| self.action_id[&Action::new(action)])
+                    .collect(),
+                ),
             }
         }
 
         fn terminal_val(
             &self,
             history: &Vec<(Player, ActionId)>,
-            hole_card: &BTreeMap<Player,char>,
+            hole_card: &BTreeMap<Player, char>,
             flop_card: Option<char>,
             pot: i32,
-            bet: &BTreeMap<Player,i32>,
+            bet: &BTreeMap<Player, i32>,
         ) -> Option<f64> {
             if flop_card.is_some() && self.ready_to_next_phase(history) {
                 // showdown
@@ -228,7 +266,8 @@ mod leduc {
         }
 
         fn open_flop_card(&self, hole_card: &BTreeMap<Player, char>) -> Vec<(ActionId, f64, char)> {
-            let mut rem: BTreeMap<char, i32> = vec![('J', 2), ('Q', 2), ('K', 2)].iter().cloned().collect();
+            let mut rem: BTreeMap<char, i32> =
+                vec![('J', 2), ('Q', 2), ('K', 2)].iter().cloned().collect();
             *rem.get_mut(&hole_card[&Player::P1]).unwrap() -= 1;
             *rem.get_mut(&hole_card[&Player::P2]).unwrap() -= 1;
 
@@ -237,7 +276,11 @@ mod leduc {
                 if rem[&card] == 0 {
                     continue;
                 }
-                trans.push((self.action_id[&Action::new(&format!("Flop{}", card))], rem[&card] as f64 / 4.0, card));
+                trans.push((
+                    self.action_id[&Action::new(&format!("Flop{}", card))],
+                    rem[&card] as f64 / 4.0,
+                    card,
+                ));
             }
             trans
         }
@@ -251,7 +294,10 @@ mod leduc {
                     } else {
                         2.0 / 15.0
                     };
-                    let hole_card = vec![(Player::P1, p1_card), (Player::P2, p2_card)].iter().cloned().collect();
+                    let hole_card = vec![(Player::P1, p1_card), (Player::P2, p2_card)]
+                        .iter()
+                        .cloned()
+                        .collect();
                     trans.push((
                         self.action_id[&Action::new(&format!("Deal{}{}", p1_card, p2_card))],
                         prob,
@@ -264,38 +310,50 @@ mod leduc {
 
         fn initialize(&mut self) {
             self.rule.actions = vec![
-                "Check", "Raise", "Fold", "Call", "FlopJ", "FlopQ", "FlopK", "DealJQ",
-                "DealJK", "DealQJ", "DealQK", "DealKJ", "DealKQ", "DealJJ", "DealQQ", "DealKK",
+                "Check", "Raise", "Fold", "Call", "FlopJ", "FlopQ", "FlopK", "DealJQ", "DealJK",
+                "DealQJ", "DealQK", "DealKJ", "DealKQ", "DealJJ", "DealQQ", "DealKK",
             ]
-                .iter()
-                .enumerate()
-                .map(|(i, action)| (ActionId::new(i), Action::new(action)))
-                .collect();
+            .iter()
+            .enumerate()
+            .map(|(i, action)| (ActionId::new(i), Action::new(action)))
+            .collect();
 
-            self.action_id = self.rule.actions
+            self.action_id = self
+                .rule
+                .actions
                 .iter()
                 .map(|(i, action)| (action.clone(), *i))
                 .collect();
         }
 
-        fn observation(&self, myself: &Player, history: &Vec<(Player, ActionId)>, hole_card: &BTreeMap<Player,char>) -> String {
+        fn observation(
+            &self,
+            myself: &Player,
+            history: &Vec<(Player, ActionId)>,
+            hole_card: &BTreeMap<Player, char>,
+        ) -> String {
             if history.len() == 1 {
                 return format!("{:?}: {}", myself, hole_card[&myself]);
             }
-            format!("{:?}: {} {}", myself, hole_card[&myself],
+            format!(
+                "{:?}: {} {}",
+                myself,
+                hole_card[&myself],
                 history
                     .iter()
                     .skip(1)
                     .map(|(_player, action_id)| String::from(self.rule.actions[action_id].to_str()))
                     .collect::<Vec<String>>()
                     .join(" ")
-                )
+            )
         }
 
         fn ready_to_next_phase(&self, history: &Vec<(Player, ActionId)>) -> bool {
             let n = history.len();
-            return self.rule.actions[&history[n-1].1].to_str() == "Call" ||
-                (n >= 2 && self.rule.actions[&history[n-1].1].to_str() == "Check" && self.rule.actions[&history[n-2].1].to_str() == "Check");
+            return self.rule.actions[&history[n - 1].1].to_str() == "Call"
+                || (n >= 2
+                    && self.rule.actions[&history[n - 1].1].to_str() == "Check"
+                    && self.rule.actions[&history[n - 2].1].to_str() == "Check");
         }
     }
 }
