@@ -1,48 +1,32 @@
 use cfr_rs::*;
 use std::time::Instant;
+use argh::FromArgs;
+
+#[derive(FromArgs)]
+/// Calculate ε-Nash Strategy
+struct Args {
+    /// the JSON file path of Game rule
+    #[argh(option)]
+    rule: String,
+    /// the number of iterations
+    #[argh(option)]
+    step: usize,
+}
 
 #[macro_use]
 extern crate log;
-extern crate log4rs;
-
-fn init_logger() {
-    use log::LevelFilter;
-    use log4rs::append::file::FileAppender;
-    use log4rs::config::{Appender, Config, Root};
-    use log4rs::encode::pattern::PatternEncoder;
-
-    let logfile = FileAppender::builder()
-        .encoder(Box::new(PatternEncoder::new("{d} {l} {t} - {m}{n}")))
-        .build("log/output.log")
-        .unwrap();
-
-    let config = Config::builder()
-        .appender(Appender::builder().build("logfile", Box::new(logfile)))
-        .build(
-            Root::builder()
-                .appender("logfile")
-                .build(LevelFilter::Debug),
-        )
-        .unwrap();
-
-    log4rs::init_config(config).unwrap();
-}
 
 fn main() {
-    init_logger();
+    env_logger::init();
+    let args: Args = argh::from_env();
 
-    trace!("start: main");
+    info!("start: main");
 
-    let rule = rule::from_path(&std::env::args().nth(1).expect("no rule given"));
-    let step = std::env::args()
-        .nth(2)
-        .expect("no step given")
-        .parse::<usize>()
-        .expect("step must be usize");
+    let rule = rule::from_path(&args.rule);
     let uniform_strt = strategy::uniform(&rule);
 
     let start = Instant::now();
-    let strt = cfr::calc_nash_strt(&rule, uniform_strt, step);
+    let strt = cfr::calc_nash_strt(&rule, uniform_strt, args.step);
     info!(
         "elapsed time: {} [sec]",
         start.elapsed().as_nanos() as f64 / 1_000_000_000 as f64
@@ -61,5 +45,5 @@ fn main() {
         solver::calc_best_resp(&rule, &player::Player::P1, &strt)
     );
 
-    trace!("finish: main");
+    info!("finish: main");
 }

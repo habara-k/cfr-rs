@@ -20,7 +20,8 @@ The implementation is not specific to any particular game, so you can analyze an
 
 You can calculate an ε-Nash equilibrium strategy for [Kuhn poker](https://en.wikipedia.org/wiki/Kuhn_poker) in `1,000,000` steps.
 ```
-$ cargo run --release --bin main src/rule/kuhn.json 1000000
+$ cargo build --release --bin main
+$ RUST_LOG=debug target/release/main --rule src/rule/kuhn.json --step 1000000
 ```
 
 
