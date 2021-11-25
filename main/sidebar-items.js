@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["init_logger",""],["main",""]]});
+initSidebarItems({"fn":[["main",""]],"struct":[["Args","Calculate ε-Nash Strategy"]]});
