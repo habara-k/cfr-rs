@@ -11,6 +11,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 ord_subset = "3"
 approx_eq = "0.1"
-indicatif = {version = "*", features = ["rayon"]}
+indicatif = { version = "*", features = ["rayon"] }
 log = "0.4.0"
-log4rs = "1.0.0"
+env_logger = "0.8.4"
+argh = "0.1.6"
