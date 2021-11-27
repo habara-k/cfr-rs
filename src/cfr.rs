@@ -151,7 +151,7 @@ fn cfr_dfs(
             let pr_myself = match player {
                 Player::P1 => pr1,
                 Player::P2 => pr2,
-                _ => panic!(),
+                _ => unreachable!(),
             };
             for (action_id, _) in edges {
                 *strt_sum
@@ -197,7 +197,7 @@ fn cfr_dfs(
                         )
                     })
                     .collect(),
-                _ => panic!(),
+                _ => unreachable!(),
             };
 
             let avg_util: f64 = action_util
@@ -208,7 +208,7 @@ fn cfr_dfs(
             let pr_except = match player {
                 Player::P1 => pr2 * prc,
                 Player::P2 => pr1 * prc,
-                _ => panic!(),
+                _ => unreachable!(),
             };
             for (action, util) in &action_util {
                 *regret_sum
