@@ -374,7 +374,7 @@
             <span class="kw">let</span> <span class="ident">pr_myself</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">player</span> {
                 <span class="ident">Player::P1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">pr1</span>,
                 <span class="ident">Player::P2</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">pr2</span>,
-                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic!</span>(),
+                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">unreachable!</span>(),
             };
             <span class="kw">for</span> (<span class="ident">action_id</span>, <span class="kw">_</span>) <span class="kw">in</span> <span class="ident">edges</span> {
                 <span class="kw-2">*</span><span class="ident">strt_sum</span>
@@ -420,7 +420,7 @@
                         )
                     })
                     .<span class="ident">collect</span>(),
-                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic!</span>(),
+                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">unreachable!</span>(),
             };
 
             <span class="kw">let</span> <span class="ident">avg_util</span>: <span class="ident">f64</span> <span class="op">=</span> <span class="ident">action_util</span>
@@ -431,7 +431,7 @@
             <span class="kw">let</span> <span class="ident">pr_except</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">player</span> {
                 <span class="ident">Player::P1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">pr2</span> <span class="op">*</span> <span class="ident">prc</span>,
                 <span class="ident">Player::P2</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">pr1</span> <span class="op">*</span> <span class="ident">prc</span>,
-                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic!</span>(),
+                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">unreachable!</span>(),
             };
             <span class="kw">for</span> (<span class="ident">action</span>, <span class="ident">util</span>) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">action_util</span> {
                 <span class="kw-2">*</span><span class="ident">regret_sum</span>
